@@ -442,12 +442,15 @@
           </div>
         `;
       } else if (state.pricing) {
+        const pricingManualReview = Boolean(state.pricing.manual_review_required);
         const partsText = state.pricing.parts_min === state.pricing.parts_max
           ? `$${formatPrice(state.pricing.parts_min)}`
           : `$${formatPrice(state.pricing.parts_min)} - $${formatPrice(state.pricing.parts_max)}`;
-        const totalText = state.pricing.grand_min === state.pricing.grand_max
-          ? `$${formatPrice(state.pricing.grand_min)}`
-          : `$${formatPrice(state.pricing.grand_min)} - $${formatPrice(state.pricing.grand_max)}`;
+        const totalText = pricingManualReview
+          ? "Manual freight review required."
+          : state.pricing.grand_min === state.pricing.grand_max
+            ? `$${formatPrice(state.pricing.grand_min)}`
+            : `$${formatPrice(state.pricing.grand_min)} - $${formatPrice(state.pricing.grand_max)}`;
 
         pricingHtml = `
           <div class="picker-breakdown-row">
@@ -460,8 +463,9 @@
           </div>
           <div class="picker-breakdown-row">
             <span>Buffered LTL Freight:</span>
-            <strong>$${formatPrice(state.pricing.freight_fee)}</strong>
+            <strong>${pricingManualReview ? "Manual review required" : `$${formatPrice(state.pricing.freight_fee)}`}</strong>
           </div>
+          ${pricingManualReview ? `<div class="picker-breakdown-row"><span>Freight Review:</span><strong>${escapeHTML(state.pricing.manual_review_note || "We will follow up with a verified shipping quote.")}</strong></div>` : ""}
           <div class="picker-total-row">
             <span>Total Quote Estimate:</span>
             <strong id="pickerTotalVal">${totalText}</strong>
@@ -546,12 +550,15 @@
           </div>
         `;
       } else if (state.pricing) {
+        const pricingManualReview = Boolean(state.pricing.manual_review_required);
         const partsText = state.pricing.parts_min === state.pricing.parts_max
           ? `$${formatPrice(state.pricing.parts_min)}`
           : `$${formatPrice(state.pricing.parts_min)} - $${formatPrice(state.pricing.parts_max)}`;
-        const totalText = state.pricing.grand_min === state.pricing.grand_max
-          ? `$${formatPrice(state.pricing.grand_min)}`
-          : `$${formatPrice(state.pricing.grand_min)} - $${formatPrice(state.pricing.grand_max)}`;
+        const totalText = pricingManualReview
+          ? "Manual freight review required."
+          : state.pricing.grand_min === state.pricing.grand_max
+            ? `$${formatPrice(state.pricing.grand_min)}`
+            : `$${formatPrice(state.pricing.grand_min)} - $${formatPrice(state.pricing.grand_max)}`;
         sidebarTotal.innerHTML = `
           <div class="sidebar-total-card">
             <div class="sidebar-total-breakdown">
@@ -565,8 +572,9 @@
               </div>
               <div class="breakdown-row">
                 <span>Buffered LTL Freight:</span>
-                <span>$${formatPrice(state.pricing.freight_fee)}</span>
+                <span>${pricingManualReview ? "Manual review required" : `$${formatPrice(state.pricing.freight_fee)}`}</span>
               </div>
+              ${pricingManualReview ? `<div class="breakdown-row"><span>Freight Review:</span><span>${escapeHTML(state.pricing.manual_review_note || "We will follow up with a verified shipping quote.")}</span></div>` : ""}
             </div>
             <div class="breakdown-divider"></div>
             <span class="total-label">Total Quote Estimate</span>
@@ -671,16 +679,19 @@
       });
 
       const pricing = result.pricing || state.pricing;
+      const pricingManualReview = Boolean(pricing && pricing.manual_review_required);
       const partsText = pricing && pricing.parts_min === pricing.parts_max
         ? `$${formatPrice(pricing.parts_min)}`
         : pricing
           ? `$${formatPrice(pricing.parts_min)} - $${formatPrice(pricing.parts_max)}`
           : "Unavailable";
-      const totalText = pricing && pricing.grand_min === pricing.grand_max
-        ? `$${formatPrice(pricing.grand_min)}`
-        : pricing
-          ? `$${formatPrice(pricing.grand_min)} - $${formatPrice(pricing.grand_max)}`
-          : "Unavailable";
+      const totalText = pricingManualReview
+        ? "Manual freight review required."
+        : pricing && pricing.grand_min === pricing.grand_max
+          ? `$${formatPrice(pricing.grand_min)}`
+          : pricing
+            ? `$${formatPrice(pricing.grand_min)} - $${formatPrice(pricing.grand_max)}`
+            : "Unavailable";
  
       // Render the dedicated Success Landing Page view
       if (quoteSuccessSection) {
@@ -707,8 +718,9 @@
                 </div>
                 <div class="breakdown-row">
                   <span>Buffered LTL Freight:</span>
-                  <span>${pricing ? `$${formatPrice(pricing.freight_fee)}` : "Unavailable"}</span>
+                  <span>${pricing ? (pricingManualReview ? "Manual review required" : `$${formatPrice(pricing.freight_fee)}`) : "Unavailable"}</span>
                 </div>
+                ${pricingManualReview ? `<div class="breakdown-row"><span>Freight Review:</span><span>${escapeHTML(pricing.manual_review_note || "We will follow up with a verified shipping quote.")}</span></div>` : ""}
               </div>
               <div class="breakdown-divider"></div>
               <span class="total-label">Your Submitted Quote</span>
