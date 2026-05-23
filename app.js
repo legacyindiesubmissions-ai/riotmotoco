@@ -11,6 +11,7 @@
   const partsCount = document.getElementById("partsCount");
   const selectedParts = document.getElementById("selectedParts");
   const selectedCount = document.getElementById("selectedCount");
+  const sidebarTotal = document.getElementById("sidebarTotal");
   const quoteForm = document.getElementById("quoteForm");
   const quoteStatus = document.getElementById("quoteStatus");
 
@@ -395,6 +396,9 @@
     
     if (!items.length) {
       selectedParts.innerHTML = "<p class=\"muted-text\">Select components to start a build sheet.</p>";
+      if (sidebarTotal) {
+        sidebarTotal.innerHTML = "";
+      }
       return;
     }
 
@@ -427,6 +431,45 @@
         </div>
       `;
     }).join("");
+
+    // Calculate total range for sidebar
+    let totalMin = 0;
+    let totalMax = 0;
+    state.selected.forEach((entry) => {
+      const dbTiers = entry.part.cross_references || [];
+      const activeTier = dbTiers.find(t => t.quality_tier === entry.tier);
+      if (activeTier) {
+        const range = parsePriceRange(activeTier.price_estimate);
+        totalMin += range.min;
+        totalMax += range.max;
+      } else {
+        const fallbackTiers = getTiersForPart(entry.part);
+        const fallbackTier = fallbackTiers.find(t => t.tier === entry.tier);
+        if (fallbackTier) {
+          const priceStr = fallbackTier.tier === "cheap" ? "$0.00" : (fallbackTier.tier === "mid" ? "+$12.00" : "+$24.00");
+          const range = parsePriceRange(priceStr);
+          totalMin += range.min;
+          totalMax += range.max;
+        }
+      }
+    });
+
+    const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let totalText = "";
+    if (totalMin === totalMax) {
+      totalText = `$${formatPrice(totalMin)}`;
+    } else {
+      totalText = `$${formatPrice(totalMin)} - $${formatPrice(totalMax)}`;
+    }
+
+    if (sidebarTotal) {
+      sidebarTotal.innerHTML = `
+        <div class="sidebar-total-card">
+          <span class="total-label">Estimated Parts Total</span>
+          <span class="total-amount">${totalText}</span>
+        </div>
+      `;
+    }
   }
 
   function selectPartTier(itemID, tier) {
