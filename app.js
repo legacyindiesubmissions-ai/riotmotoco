@@ -69,6 +69,26 @@
     }[tier] || "Riot Spec";
   }
 
+  function getOptionLabel(part, ref) {
+    if (part.item_id === "ALL-001") {
+      return {
+        cheap: "CDH 2.4L Tank Frame (Standard 135mm Dropouts)",
+        mid: "CDH 3.4L Tank Frame (Standard 135mm Dropouts)",
+        premium: "CDH 3.4L Tank Frame (Wide 170mm Fat-Tire Dropouts)"
+      }[ref.quality_tier] || (ref.public_sku || `RMC-${part.item_id}-${ref.quality_tier}`);
+    }
+    
+    const sku = ref.public_sku || `RMC-${part.item_id}-${ref.quality_tier}`;
+    if (ref.proven_specs) {
+      const cleanSpecs = ref.proven_specs.replace(/^[\s,;.-]+|[\s,;.-]+$/g, "");
+      const firstClause = cleanSpecs.split(/[;.]/)[0].trim();
+      if (firstClause.length > 0 && firstClause.length < 75) {
+        return `${sku} — ${firstClause}`;
+      }
+    }
+    return sku;
+  }
+
   async function fetchJSON(path, options) {
     const response = await fetch(`${apiBase}${path}`, options);
     if (!response.ok) {
@@ -242,7 +262,7 @@
           
           return {
             tier: ref.quality_tier,
-            label: ref.public_sku || `RMC-${part.item_id}-${ref.quality_tier}`,
+            label: getOptionLabel(part, ref),
             desc: ref.proven_specs,
             badge: badge,
             price: ref.price_estimate,
