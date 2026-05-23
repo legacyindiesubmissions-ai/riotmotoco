@@ -371,11 +371,12 @@
       }
     });
 
+    const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     let totalText = "";
     if (totalMin === totalMax) {
-      totalText = `$${totalMin.toFixed(2)}`;
+      totalText = `$${formatPrice(totalMin)}`;
     } else {
-      totalText = `$${totalMin.toFixed(2)} - $${totalMax.toFixed(2)}`;
+      totalText = `$${formatPrice(totalMin)} - $${formatPrice(totalMax)}`;
     }
 
     html += `
