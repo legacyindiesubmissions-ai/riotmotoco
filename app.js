@@ -6,7 +6,6 @@
   );
 
   const buildSelect = document.getElementById("buildSelect");
-  const partSearch = document.getElementById("partSearch");
   const systemFilters = document.getElementById("systemFilters");
   const partsList = document.getElementById("partsList");
   const partsCount = document.getElementById("partsCount");
@@ -40,6 +39,18 @@
       "\"": "&quot;",
       "'": "&#39;",
     }[char]));
+  }
+
+  function parsePriceValue(priceStr) {
+    if (!priceStr) return 0;
+    let clean = "";
+    for (let c of priceStr) {
+      if ((c >= "0" && c <= "9") || c === ".") {
+        clean += c;
+      }
+    }
+    const val = parseFloat(clean);
+    return isNaN(val) ? 0 : val;
   }
 
   async function fetchJSON(path, options) {
@@ -136,13 +147,9 @@
 
   async function loadParts() {
     const build = buildSelect.value;
-    const query = partSearch.value.trim();
     const params = new URLSearchParams({ limit: "500" });
-    if (query) {
-      params.set("q", query);
-    }
 
-    partsList.innerHTML = "<p class=\"muted-text\">Loading parts...</p>";
+    partsList.innerHTML = "<p class=\"muted-text\">Loading components list...</p>";
     partsCount.textContent = "Loading...";
 
     try {
@@ -185,17 +192,26 @@
 
   function renderParts() {
     const filtered = state.parts.filter((part) => state.activeSystem === "all" || part.system === state.activeSystem);
-    partsCount.textContent = `${filtered.length} parts`;
+    partsCount.textContent = `${filtered.length} components`;
 
     if (!filtered.length) {
-      partsList.innerHTML = "<p class=\"muted-text\">No matching parts found.</p>";
+      partsList.innerHTML = "<p class=\"muted-text\">No components found.</p>";
       return;
     }
 
-    partsList.innerHTML = filtered.map((part) => {
+    let html = `
+      <div class="part-picker-table">
+        <div class="picker-header-row">
+          <div class="col-part">Component</div>
+          <div class="col-selection">Selection & Sourcing Tier</div>
+          <div class="col-price">Est. Cost</div>
+        </div>
+    `;
+
+    html += filtered.map((part) => {
       const isRequired = part.required && part.required.toLowerCase() === "yes";
       const selection = state.selected.get(part.item_id);
-      const selectedTier = selection ? selection.tier : null;
+      const selectedTier = selection ? selection.tier : "none";
       
       const dbTiers = part.cross_references || [];
       let tiers = [];
@@ -214,7 +230,7 @@
             desc: ref.proven_specs,
             badge: badge,
             price: ref.price_estimate,
-            url: ref.source_url
+            inventory: ref.inventory_count || 0
           };
         });
       } else {
@@ -222,68 +238,105 @@
         tiers = fallbackTiers.map((t) => ({
           ...t,
           price: t.tier === "cheap" ? "$0.00" : (t.tier === "mid" ? "+$12.00" : "+$24.00"),
-          url: ""
+          inventory: 0
         }));
       }
-      
-      const tierButtons = tiers.map((t) => {
-        const isActive = selectedTier === t.tier;
-        const priceTag = t.price ? `<span class="tier-price">${escapeHTML(t.price)}</span>` : "";
-        const sourceLink = t.url ? `<a href="${escapeHTML(t.url)}" target="_blank" class="tier-link" onclick="event.stopPropagation()">View Product ↗</a>` : "";
-        
+
+      // Find details of the currently selected tier
+      const activeTierDetails = tiers.find(t => t.tier === selectedTier);
+
+      // Render Dropdown options
+      const optionsHtml = tiers.map((t) => {
+        const isOptActive = selectedTier === t.tier;
+        const stockText = t.inventory > 0 ? `In Stock` : "Out of Stock";
         return `
-          <button type="button" 
-                  class="tier-card ${t.tier}${isActive ? " active" : ""}" 
-                  data-item="${escapeHTML(part.item_id)}" 
-                  data-tier="${t.tier}">
-            <div class="tier-card-header">
-              <span class="tier-badge">${escapeHTML(t.badge)}</span>
-              ${priceTag}
-            </div>
-            <strong class="tier-title">${escapeHTML(t.label)}</strong>
-            <span class="tier-desc">${escapeHTML(t.desc)}</span>
-            ${sourceLink}
-          </button>
+          <option value="${escapeHTML(t.tier)}" ${isOptActive ? "selected" : ""}>
+            ${escapeHTML(t.badge)}: ${escapeHTML(t.label)} — ${escapeHTML(t.price)} (${stockText})
+          </option>
         `;
       }).join("");
 
-      const excludeButton = !isRequired ? `
-        <button type="button" 
-                class="tier-card none${!selectedTier ? " active" : ""}" 
-                data-item="${escapeHTML(part.item_id)}" 
-                data-tier="none">
-          <div class="tier-card-header">
-            <span class="tier-badge">Exclude</span>
-          </div>
-          <strong class="tier-title">Not Included</strong>
-          <span class="tier-desc">Do not include this component in the build sheet.</span>
-        </button>
+      const excludeOption = !isRequired ? `
+        <option value="none" ${selectedTier === "none" ? "selected" : ""}>
+          ❌ Exclude / Do Not Include
+        </option>
       ` : "";
 
       const requiredPill = isRequired 
-        ? "<span class=\"required-pill\">Required base item</span>" 
-        : "<span class=\"optional-pill\">Optional upgrade / accessory</span>";
+        ? "<span class=\"required-pill\">Required</span>" 
+        : "<span class=\"optional-pill\">Optional</span>";
+
+      // Populate descriptions, stock, and price details dynamically
+      let specsText = "Do not include this component in the build sheet.";
+      let stockBadgeHtml = `<span class="stock-badge out-of-stock">Excluded</span>`;
+      let priceText = "$0.00";
+
+      if (activeTierDetails) {
+        specsText = activeTierDetails.desc;
+        const stockStatus = activeTierDetails.inventory > 0 
+          ? `🟢 In Stock (${activeTierDetails.inventory} ready at workshop)` 
+          : "🟡 Out of Stock (Procurement Link Ready)";
+        const stockClass = activeTierDetails.inventory > 0 ? "in-stock" : "out-of-stock";
+        stockBadgeHtml = `<span class="stock-badge ${stockClass}">${escapeHTML(stockStatus)}</span>`;
+        priceText = activeTierDetails.price;
+      }
 
       return `
-        <article class="part-row${selectedTier ? " included" : " excluded"}" id="row-${escapeHTML(part.item_id)}">
-          <div class="part-header">
-            <div class="part-title-row">
+        <div class="picker-row${selectedTier !== "none" ? " included" : " excluded"}" id="row-${escapeHTML(part.item_id)}">
+          <!-- Component Category -->
+          <div class="col-part">
+            <div class="comp-title-row">
               <h4>${escapeHTML(part.part)}</h4>
               ${requiredPill}
             </div>
-            <dl class="part-meta">
-              <div><dt>ID</dt><dd>${escapeHTML(part.item_id)}</dd></div>
-              <div><dt>System</dt><dd>${escapeHTML(part.system)}</dd></div>
-              ${part.notes ? `<div><dt>Note</dt><dd>${escapeHTML(part.notes)}</dd></div>` : ""}
-            </dl>
+            <span class="comp-meta">ID: <code>${escapeHTML(part.item_id)}</code> | System: <span class="system-tag">${escapeHTML(part.system)}</span></span>
           </div>
-          <div class="tier-grid">
-            ${tierButtons}
-            ${excludeButton}
+
+          <!-- Selection Dropdown -->
+          <div class="col-selection">
+            <select class="tier-select" data-item="${escapeHTML(part.item_id)}">
+              ${optionsHtml}
+              ${excludeOption}
+            </select>
+            <div class="specs-box">
+              <p class="specs-desc">${escapeHTML(specsText)}</p>
+              ${stockBadgeHtml}
+            </div>
           </div>
-        </article>
+
+          <!-- Price Display -->
+          <div class="col-price">
+            <span class="price-val">${escapeHTML(priceText)}</span>
+          </div>
+        </div>
       `;
     }).join("");
+
+    // Calculate total accumulative cost of selected parts
+    let runningTotalSum = 0;
+    state.selected.forEach((entry) => {
+      const dbTiers = entry.part.cross_references || [];
+      const activeTier = dbTiers.find(t => t.quality_tier === entry.tier);
+      if (activeTier) {
+        runningTotalSum += parsePriceValue(activeTier.price_estimate);
+      } else {
+        const fallbackTiers = getTiersForPart(entry.part);
+        const fallbackTier = fallbackTiers.find(t => t.tier === entry.tier);
+        if (fallbackTier) {
+          const priceStr = fallbackTier.tier === "cheap" ? "$0.00" : (fallbackTier.tier === "mid" ? "+$12.00" : "+$24.00");
+          runningTotalSum += parsePriceValue(priceStr);
+        }
+      }
+    });
+
+    html += `
+      <div class="picker-total-row">
+        <span>Estimated System Parts Total:</span>
+        <strong id="pickerTotalVal">$${runningTotalSum.toFixed(2)}</strong>
+      </div>
+    </div>`;
+
+    partsList.innerHTML = html;
   }
 
   function renderSelected() {
@@ -344,13 +397,14 @@
     renderParts();
   });
 
-  partsList.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-item]");
-    if (!button) {
+  // Listen to dropdown changes on the parts table
+  partsList.addEventListener("change", (event) => {
+    const select = event.target.closest(".tier-select");
+    if (!select) {
       return;
     }
-    const itemID = button.dataset.item;
-    const tier = button.dataset.tier;
+    const itemID = select.dataset.item;
+    const tier = select.value;
     selectPartTier(itemID, tier);
   });
 
@@ -358,11 +412,6 @@
     state.selected.clear();
     renderSelected();
     loadParts();
-  });
-
-  partSearch.addEventListener("input", () => {
-    window.clearTimeout(partSearch.searchTimer);
-    partSearch.searchTimer = window.setTimeout(loadParts, 180);
   });
 
   quoteForm.addEventListener("submit", async (event) => {
@@ -393,6 +442,7 @@
       quoteForm.reset();
       state.selected.clear();
       renderSelected();
+      
       // Re-populate required parts
       state.parts.forEach((part) => {
         const isRequired = part.required && part.required.toLowerCase() === "yes";
@@ -403,10 +453,10 @@
       renderSelected();
       renderParts();
     } catch (error) {
-      const subject = encodeURIComponent(`Riot Moto Co. quote request - ${buildNames[buildSelect.value] || buildSelect.value}`);
+      const subject = encodeURIComponent($"Riot Moto Co. quote request - ${buildNames[buildSelect.value] || buildSelect.value}");
       
       const partListText = Array.from(state.selected.values()).map(({ part, tier }) => {
-        const tierName = { cheap: "Cheap Shit", mid: "Mid-Range", premium: "Riot Spec" }[tier];
+        const tierName = { cheap: "Cheap OEM", mid: "Mid-Range", premium: "Riot Spec" }[tier];
         return `- ${part.part} (${part.item_id}) -> Tier: ${tierName}`;
       }).join("\n");
 
