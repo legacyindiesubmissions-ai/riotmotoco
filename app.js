@@ -43,14 +43,30 @@
 
   function parsePriceValue(priceStr) {
     if (!priceStr) return 0;
-    let clean = "";
-    for (let c of priceStr) {
-      if ((c >= "0" && c <= "9") || c === ".") {
-        clean += c;
-      }
+    const matches = priceStr.match(/\d+(?:\.\d+)?/g);
+    if (!matches || matches.length === 0) return 0;
+    const numbers = matches.map(parseFloat);
+    const sum = numbers.reduce((a, b) => a + b, 0);
+    return sum / numbers.length;
+  }
+
+  function parsePriceRange(priceStr) {
+    if (!priceStr) return { min: 0, max: 0 };
+    const matches = priceStr.match(/\d+(?:\.\d+)?/g);
+    if (!matches || matches.length === 0) return { min: 0, max: 0 };
+    const numbers = matches.map(parseFloat);
+    if (numbers.length === 1) {
+      return { min: numbers[0], max: numbers[0] };
     }
-    const val = parseFloat(clean);
-    return isNaN(val) ? 0 : val;
+    return { min: Math.min(...numbers), max: Math.max(...numbers) };
+  }
+
+  function tierDisplayName(tier) {
+    return {
+      cheap: "Cheap OEM",
+      mid: "Mid-Range",
+      premium: "Riot Spec",
+    }[tier] || "Riot Spec";
   }
 
   async function fetchJSON(path, options) {
@@ -139,9 +155,9 @@
     }
 
     return [
-      { tier: "cheap", label: cheapLabel, desc: cheapDesc, badge: "Cheap OEM" },
-      { tier: "mid", label: midLabel, desc: midDesc, badge: "Mid-Range" },
-      { tier: "premium", label: premiumLabel, desc: premiumDesc, badge: "Riot Spec" }
+      { tier: "cheap", label: cheapLabel, desc: cheapDesc, badge: tierDisplayName("cheap") },
+      { tier: "mid", label: midLabel, desc: midDesc, badge: tierDisplayName("mid") },
+      { tier: "premium", label: premiumLabel, desc: premiumDesc, badge: tierDisplayName("premium") }
     ];
   }
 
@@ -226,7 +242,7 @@
           
           return {
             tier: ref.quality_tier,
-            label: `${ref.brand} (${ref.sku})`,
+            label: ref.public_sku || `RMC-${part.item_id}-${ref.quality_tier}`,
             desc: ref.proven_specs,
             badge: badge,
             price: ref.price_estimate,
@@ -313,26 +329,38 @@
     }).join("");
 
     // Calculate total accumulative cost of selected parts
-    let runningTotalSum = 0;
+    let totalMin = 0;
+    let totalMax = 0;
     state.selected.forEach((entry) => {
       const dbTiers = entry.part.cross_references || [];
       const activeTier = dbTiers.find(t => t.quality_tier === entry.tier);
       if (activeTier) {
-        runningTotalSum += parsePriceValue(activeTier.price_estimate);
+        const range = parsePriceRange(activeTier.price_estimate);
+        totalMin += range.min;
+        totalMax += range.max;
       } else {
         const fallbackTiers = getTiersForPart(entry.part);
         const fallbackTier = fallbackTiers.find(t => t.tier === entry.tier);
         if (fallbackTier) {
           const priceStr = fallbackTier.tier === "cheap" ? "$0.00" : (fallbackTier.tier === "mid" ? "+$12.00" : "+$24.00");
-          runningTotalSum += parsePriceValue(priceStr);
+          const range = parsePriceRange(priceStr);
+          totalMin += range.min;
+          totalMax += range.max;
         }
       }
     });
 
+    let totalText = "";
+    if (totalMin === totalMax) {
+      totalText = `$${totalMin.toFixed(2)}`;
+    } else {
+      totalText = `$${totalMin.toFixed(2)} - $${totalMax.toFixed(2)}`;
+    }
+
     html += `
       <div class="picker-total-row">
         <span>Estimated System Parts Total:</span>
-        <strong id="pickerTotalVal">$${runningTotalSum.toFixed(2)}</strong>
+        <strong id="pickerTotalVal">${totalText}</strong>
       </div>
     </div>`;
 
