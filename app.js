@@ -16,6 +16,7 @@
   const quoteStatus = document.getElementById("quoteStatus");
   const quoteConfigSection = document.getElementById("quoteConfigSection");
   const quoteSuccessSection = document.getElementById("quoteSuccessSection");
+  const quoteZipInput = quoteForm ? quoteForm.querySelector('input[name="shipping_zip"]') : null;
 
   if (!buildSelect || !partsList || !quoteForm) {
     return;
@@ -26,6 +27,10 @@
     systems: new Set(),
     activeSystem: "all",
     selected: new Map(), // itemID -> { part, tier }
+    pricing: null,
+    pricingPending: false,
+    pricingError: "",
+    pricingRequestID: 0,
   };
 
   const buildNames = {
@@ -70,6 +75,72 @@
       mid: "Mid-Range",
       premium: "Riot Spec",
     }[tier] || "Riot Spec";
+  }
+
+  function normalizeZip(value) {
+    return String(value || "").replace(/\D/g, "").slice(0, 5);
+  }
+
+  function getSelectedItemsPayload() {
+    return Array.from(state.selected.entries()).map(([id, entry]) => `${id}:${entry.tier}`);
+  }
+
+  async function refreshPricing() {
+    const selectedItems = getSelectedItemsPayload();
+    const shippingZip = normalizeZip(quoteZipInput ? quoteZipInput.value : "");
+
+    if (!selectedItems.length) {
+      state.pricing = null;
+      state.pricingPending = false;
+      state.pricingError = "";
+      renderParts();
+      renderSelected();
+      return;
+    }
+
+    if (shippingZip.length !== 5) {
+      state.pricing = null;
+      state.pricingPending = false;
+      state.pricingError = "Enter a 5-digit delivery ZIP to price freight.";
+      renderParts();
+      renderSelected();
+      return;
+    }
+
+    const requestID = ++state.pricingRequestID;
+    state.pricingPending = true;
+    state.pricingError = "";
+    renderParts();
+    renderSelected();
+
+    try {
+      const pricing = await fetchJSON("/api/public/quote-pricing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          build: buildSelect.value,
+          shipping_zip: shippingZip,
+          selected_items: selectedItems,
+        }),
+      });
+      if (requestID !== state.pricingRequestID) {
+        return;
+      }
+      state.pricing = pricing;
+      state.pricingPending = false;
+      state.pricingError = "";
+      renderParts();
+      renderSelected();
+    } catch (error) {
+      if (requestID !== state.pricingRequestID) {
+        return;
+      }
+      state.pricing = null;
+      state.pricingPending = false;
+      state.pricingError = error.message || "Freight pricing unavailable.";
+      renderParts();
+      renderSelected();
+    }
   }
 
   function getOptionLabel(part, ref) {
@@ -208,6 +279,7 @@
       renderFilters();
       renderParts();
       renderSelected();
+      refreshPricing();
     } catch (error) {
       partsCount.textContent = "API offline";
       partsList.innerHTML = `
@@ -352,65 +424,61 @@
       `;
     }).join("");
 
-    // Calculate total accumulative cost of selected parts
-    let totalMin = 0;
-    let totalMax = 0;
-    state.selected.forEach((entry) => {
-      const dbTiers = entry.part.cross_references || [];
-      const activeTier = dbTiers.find(t => t.quality_tier === entry.tier);
-      if (activeTier) {
-        const range = parsePriceRange(activeTier.price_estimate);
-        totalMin += range.min;
-        totalMax += range.max;
-      } else {
-        const fallbackTiers = getTiersForPart(entry.part);
-        const fallbackTier = fallbackTiers.find(t => t.tier === entry.tier);
-        if (fallbackTier) {
-          const priceStr = fallbackTier.tier === "cheap" ? "$0.00" : (fallbackTier.tier === "mid" ? "+$12.00" : "+$24.00");
-          const range = parsePriceRange(priceStr);
-          totalMin += range.min;
-          totalMax += range.max;
-        }
-      }
-    });
-
     const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     if (state.selected.size > 0) {
-      const partsMin = totalMin;
-      const partsMax = totalMax;
-      const assemblyFee = 250.00;
-      const freightFee = 150.00;
-      
-      const partsText = partsMin === partsMax 
-        ? `$${formatPrice(partsMin)}` 
-        : `$${formatPrice(partsMin)} - $${formatPrice(partsMax)}`;
-        
-      const grandMin = partsMin + assemblyFee + freightFee;
-      const grandMax = partsMax + assemblyFee + freightFee;
-      
-      const totalText = grandMin === grandMax 
-        ? `$${formatPrice(grandMin)}` 
-        : `$${formatPrice(grandMin)} - $${formatPrice(grandMax)}`;
-        
-      html += `
-        <div class="picker-total-block">
+      let pricingHtml = `
+        <div class="picker-total-row">
+          <span>Total Quote Estimate:</span>
+          <strong id="pickerTotalVal">Enter delivery ZIP to price freight.</strong>
+        </div>
+      `;
+
+      if (state.pricingPending) {
+        pricingHtml = `
+          <div class="picker-total-row">
+            <span>Total Quote Estimate:</span>
+            <strong id="pickerTotalVal">Pricing freight...</strong>
+          </div>
+        `;
+      } else if (state.pricing) {
+        const partsText = state.pricing.parts_min === state.pricing.parts_max
+          ? `$${formatPrice(state.pricing.parts_min)}`
+          : `$${formatPrice(state.pricing.parts_min)} - $${formatPrice(state.pricing.parts_max)}`;
+        const totalText = state.pricing.grand_min === state.pricing.grand_max
+          ? `$${formatPrice(state.pricing.grand_min)}`
+          : `$${formatPrice(state.pricing.grand_min)} - $${formatPrice(state.pricing.grand_max)}`;
+
+        pricingHtml = `
           <div class="picker-breakdown-row">
             <span>Configured Components Total:</span>
             <strong>${partsText}</strong>
           </div>
           <div class="picker-breakdown-row">
             <span>Pro Assembly & Bench Testing:</span>
-            <strong>$${formatPrice(assemblyFee)}</strong>
+            <strong>$${formatPrice(state.pricing.assembly_fee)}</strong>
           </div>
           <div class="picker-breakdown-row">
-            <span>Custom Crating & LTL Freight:</span>
-            <strong>$${formatPrice(freightFee)}</strong>
+            <span>Buffered LTL Freight:</span>
+            <strong>$${formatPrice(state.pricing.freight_fee)}</strong>
           </div>
           <div class="picker-total-row">
             <span>Total Quote Estimate:</span>
             <strong id="pickerTotalVal">${totalText}</strong>
           </div>
+        `;
+      } else if (state.pricingError) {
+        pricingHtml = `
+          <div class="picker-total-row">
+            <span>Total Quote Estimate:</span>
+            <strong id="pickerTotalVal">${escapeHTML(state.pricingError)}</strong>
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="picker-total-block">
+          ${pricingHtml}
         </div>
       </div>`;
     } else {
@@ -467,68 +535,52 @@
       `;
     }).join("");
 
-    // Calculate total range for sidebar
-    let totalMin = 0;
-    let totalMax = 0;
-    state.selected.forEach((entry) => {
-      const dbTiers = entry.part.cross_references || [];
-      const activeTier = dbTiers.find(t => t.quality_tier === entry.tier);
-      if (activeTier) {
-        const range = parsePriceRange(activeTier.price_estimate);
-        totalMin += range.min;
-        totalMax += range.max;
-      } else {
-        const fallbackTiers = getTiersForPart(entry.part);
-        const fallbackTier = fallbackTiers.find(t => t.tier === entry.tier);
-        if (fallbackTier) {
-          const priceStr = fallbackTier.tier === "cheap" ? "$0.00" : (fallbackTier.tier === "mid" ? "+$12.00" : "+$24.00");
-          const range = parsePriceRange(priceStr);
-          totalMin += range.min;
-          totalMax += range.max;
-        }
-      }
-    });
-
     const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    
-    const partsMin = totalMin;
-    const partsMax = totalMax;
-    const assemblyFee = 250.00;
-    const freightFee = 150.00;
-    
-    const partsText = partsMin === partsMax 
-      ? `$${formatPrice(partsMin)}` 
-      : `$${formatPrice(partsMin)} - $${formatPrice(partsMax)}`;
-      
-    const grandMin = partsMin + assemblyFee + freightFee;
-    const grandMax = partsMax + assemblyFee + freightFee;
-    
-    const totalText = grandMin === grandMax 
-      ? `$${formatPrice(grandMin)}` 
-      : `$${formatPrice(grandMin)} - $${formatPrice(grandMax)}`;
 
     if (sidebarTotal) {
-      sidebarTotal.innerHTML = `
-        <div class="sidebar-total-card">
-          <div class="sidebar-total-breakdown">
-            <div class="breakdown-row">
-              <span>Configured Parts:</span>
-              <span>${partsText}</span>
-            </div>
-            <div class="breakdown-row">
-              <span>Pro Assembly:</span>
-              <span>$${formatPrice(assemblyFee)}</span>
-            </div>
-            <div class="breakdown-row">
-              <span>LTL Freight:</span>
-              <span>$${formatPrice(freightFee)}</span>
-            </div>
+      if (state.pricingPending) {
+        sidebarTotal.innerHTML = `
+          <div class="sidebar-total-card">
+            <span class="total-label">Total Quote Estimate</span>
+            <span class="total-amount">Pricing freight...</span>
           </div>
-          <div class="breakdown-divider"></div>
-          <span class="total-label">Total Quote Estimate</span>
-          <span class="total-amount">${totalText}</span>
-        </div>
-      `;
+        `;
+      } else if (state.pricing) {
+        const partsText = state.pricing.parts_min === state.pricing.parts_max
+          ? `$${formatPrice(state.pricing.parts_min)}`
+          : `$${formatPrice(state.pricing.parts_min)} - $${formatPrice(state.pricing.parts_max)}`;
+        const totalText = state.pricing.grand_min === state.pricing.grand_max
+          ? `$${formatPrice(state.pricing.grand_min)}`
+          : `$${formatPrice(state.pricing.grand_min)} - $${formatPrice(state.pricing.grand_max)}`;
+        sidebarTotal.innerHTML = `
+          <div class="sidebar-total-card">
+            <div class="sidebar-total-breakdown">
+              <div class="breakdown-row">
+                <span>Configured Parts:</span>
+                <span>${partsText}</span>
+              </div>
+              <div class="breakdown-row">
+                <span>Pro Assembly:</span>
+                <span>$${formatPrice(state.pricing.assembly_fee)}</span>
+              </div>
+              <div class="breakdown-row">
+                <span>Buffered LTL Freight:</span>
+                <span>$${formatPrice(state.pricing.freight_fee)}</span>
+              </div>
+            </div>
+            <div class="breakdown-divider"></div>
+            <span class="total-label">Total Quote Estimate</span>
+            <span class="total-amount">${totalText}</span>
+          </div>
+        `;
+      } else {
+        sidebarTotal.innerHTML = `
+          <div class="sidebar-total-card">
+            <span class="total-label">Total Quote Estimate</span>
+            <span class="total-amount">${escapeHTML(state.pricingError || "Enter delivery ZIP to price freight.")}</span>
+          </div>
+        `;
+      }
     }
   }
 
@@ -544,6 +596,7 @@
     }
     renderParts();
     renderSelected();
+    refreshPricing();
   }
 
   systemFilters.addEventListener("click", (event) => {
@@ -569,68 +622,38 @@
 
   buildSelect.addEventListener("change", () => {
     state.selected.clear();
+    state.pricing = null;
+    state.pricingError = "";
     renderSelected();
     loadParts();
   });
+
+  if (quoteZipInput) {
+    quoteZipInput.addEventListener("input", () => {
+      quoteZipInput.value = normalizeZip(quoteZipInput.value);
+      refreshPricing();
+    });
+  }
 
   quoteForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     quoteStatus.textContent = "Sending quote sheet...";
     const form = new FormData(quoteForm);
-    
-    const selectedItems = Array.from(state.selected.entries()).map(([id, entry]) => {
-      return `${id}:${entry.tier}`;
-    });
+    const selectedItems = getSelectedItemsPayload();
+    const shippingZip = normalizeZip(form.get("shipping_zip"));
 
     const payload = {
       name: form.get("name"),
       email: form.get("email"),
       phone: form.get("phone"),
       build: buildSelect.value,
+      shipping_zip: shippingZip,
       message: form.get("message"),
       selected_items: selectedItems,
     };
 
     try {
-      // Capture the submitted components and calculate breakdown before clearing selections
       const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      let totalMin = 0;
-      let totalMax = 0;
-      state.selected.forEach((entry) => {
-        const dbTiers = entry.part.cross_references || [];
-        const activeTier = dbTiers.find(t => t.quality_tier === entry.tier);
-        if (activeTier) {
-          const range = parsePriceRange(activeTier.price_estimate);
-          totalMin += range.min;
-          totalMax += range.max;
-        } else {
-          const fallbackTiers = getTiersForPart(entry.part);
-          const fallbackTier = fallbackTiers.find(t => t.tier === entry.tier);
-          if (fallbackTier) {
-            const priceStr = fallbackTier.tier === "cheap" ? "$0.00" : (fallbackTier.tier === "mid" ? "+$12.00" : "+$24.00");
-            const range = parsePriceRange(priceStr);
-            totalMin += range.min;
-            totalMax += range.max;
-          }
-        }
-      });
-      
-      const partsMin = totalMin;
-      const partsMax = totalMax;
-      const assemblyFee = 250.00;
-      const freightFee = 150.00;
-      
-      const partsText = partsMin === partsMax 
-        ? `$${formatPrice(partsMin)}` 
-        : `$${formatPrice(partsMin)} - $${formatPrice(partsMax)}`;
-        
-      const grandMin = partsMin + assemblyFee + freightFee;
-      const grandMax = partsMax + assemblyFee + freightFee;
-      
-      const totalText = grandMin === grandMax 
-        ? `$${formatPrice(grandMin)}` 
-        : `$${formatPrice(grandMin)} - $${formatPrice(grandMax)}`;
-      
       const successParts = Array.from(state.selected.values()).map(({ part, tier }) => {
         const tierLabel = { cheap: "Cheap OEM", mid: "Mid-Range", premium: "Riot Spec" }[tier] || "Riot Spec";
         return `
@@ -646,6 +669,18 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      const pricing = result.pricing || state.pricing;
+      const partsText = pricing && pricing.parts_min === pricing.parts_max
+        ? `$${formatPrice(pricing.parts_min)}`
+        : pricing
+          ? `$${formatPrice(pricing.parts_min)} - $${formatPrice(pricing.parts_max)}`
+          : "Unavailable";
+      const totalText = pricing && pricing.grand_min === pricing.grand_max
+        ? `$${formatPrice(pricing.grand_min)}`
+        : pricing
+          ? `$${formatPrice(pricing.grand_min)} - $${formatPrice(pricing.grand_max)}`
+          : "Unavailable";
  
       // Render the dedicated Success Landing Page view
       if (quoteSuccessSection) {
@@ -668,11 +703,11 @@
                 </div>
                 <div class="breakdown-row">
                   <span>Pro Assembly:</span>
-                  <span>$${formatPrice(assemblyFee)}</span>
+                  <span>${pricing ? `$${formatPrice(pricing.assembly_fee)}` : "Unavailable"}</span>
                 </div>
                 <div class="breakdown-row">
-                  <span>LTL Freight:</span>
-                  <span>$${formatPrice(freightFee)}</span>
+                  <span>Buffered LTL Freight:</span>
+                  <span>${pricing ? `$${formatPrice(pricing.freight_fee)}` : "Unavailable"}</span>
                 </div>
               </div>
               <div class="breakdown-divider"></div>
@@ -709,6 +744,8 @@
       // Reset the form and selection back to default state
       quoteForm.reset();
       state.selected.clear();
+      state.pricing = null;
+      state.pricingError = "";
       renderSelected();
       
       // Re-populate required parts
@@ -736,6 +773,7 @@
         `Name: ${payload.name || ""}`,
         `Email: ${payload.email || ""}`,
         `Phone: ${payload.phone || ""}`,
+        `Shipping ZIP: ${payload.shipping_zip || ""}`,
         "",
         payload.message || "",
       ].join("\n"));
