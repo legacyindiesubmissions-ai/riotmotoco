@@ -28,10 +28,8 @@ A 185.199.111.153
 6. Add `www` as a CNAME:
 
 ```text
-www CNAME legacyindieradio.github.io
+www CNAME legacyindiesubmissions-ai.github.io
 ```
-
-Use the actual GitHub Pages username or organization if the repo owner differs.
 
 ## Before taking payments
 

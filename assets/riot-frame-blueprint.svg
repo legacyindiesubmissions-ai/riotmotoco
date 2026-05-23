@@ -1,62 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 560" role="img" aria-labelledby="title desc">
-  <title id="title">Riot Moto Co. blueprint</title>
-  <desc id="desc">Blueprint line art of a motorized bicycle frame and engine package.</desc>
-  <defs>
-    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
-      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#f2b705" stroke-opacity=".12" stroke-width="1"/>
-    </pattern>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="2.4" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-  <rect width="980" height="560" fill="#14130f"/>
-  <rect width="980" height="560" fill="url(#grid)"/>
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
-    <g stroke="#f2b705" stroke-width="8">
-      <circle cx="190" cy="390" r="118"/>
-      <circle cx="780" cy="390" r="118"/>
-      <path d="M190 390h226l176-212 188 212"/>
-      <path d="M416 390 276 188h316"/>
-      <path d="M276 188 190 390"/>
-      <path d="M592 178 780 390"/>
-      <path d="M360 158h218"/>
-      <path d="M358 154l-34-72"/>
-      <path d="M580 156l44-78"/>
-    </g>
-    <g stroke="#f3eee2" stroke-width="5">
-      <path d="M345 328h172l30 86H320z"/>
-      <path d="M373 286h105l40 42H352z"/>
-      <path d="M382 414h118"/>
-      <path d="M400 286v-58h58v58"/>
-      <path d="M642 188h128"/>
-      <path d="M620 78h84l42 110"/>
-      <path d="M316 82h-84l-38 102"/>
-      <path d="M228 180h98"/>
-      <path d="M78 390h224"/>
-      <path d="M668 390h224"/>
-    </g>
-    <g stroke="#c83f2f" stroke-width="6">
-      <path d="M514 328c60-38 96-44 146-28"/>
-      <path d="M660 300c38 13 68 42 88 90"/>
-      <path d="M520 414l140-24"/>
-    </g>
-    <g stroke="#9ba7a5" stroke-width="3" opacity=".95">
-      <path d="M92 102h192"/>
-      <path d="M92 126h138"/>
-      <path d="M700 82h190"/>
-      <path d="M724 106h116"/>
-      <path d="M78 486h158"/>
-      <path d="M724 486h178"/>
-    </g>
-  </g>
-  <g fill="#f3eee2" font-family="Aptos, Segoe UI, sans-serif" font-size="18" font-weight="700">
-    <text x="92" y="92">OPEN FRAME ARCHITECTURE</text>
-    <text x="704" y="72">STANDARD SERVICE PARTS</text>
-    <text x="78" y="518">HIGH-TENSILE MOUNTING TARGETS</text>
-    <text x="724" y="518">RIOT MOTO CO.</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" fill="none" stroke="#f2b705" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title desc">
+  <title id="title">Riot Moto Co. frame blueprint</title>
+  <desc id="desc">Minimal technical line drawing of a motorized bicycle frame layout.</desc>
+  <path stroke="rgba(243, 238, 226, 0.05)" stroke-width="0.5" d="M0 30h500M0 60h500M0 90h500M0 120h500M0 150h500M0 180h500M0 210h500M0 240h500M0 270h500M30 0v300M60 0v300M90 0v300M120 0v300M150 0v300M180 0v300M210 0v300M240 0v300M270 0v300M300 0v300M330 0v300M360 0v300M390 0v300M420 0v300M450 0v300M480 0v300"/>
+  <polygon points="120,110 240,110 360,200 180,200" stroke-width="2"/>
+  <line x1="120" y1="110" x2="180" y2="200" stroke-width="2"/>
+  <line x1="240" y1="110" x2="180" y2="200" stroke-width="2"/>
+  <rect x="160" y="165" width="50" height="30" rx="3" stroke="#c83f2f" fill="rgba(200, 63, 47, 0.1)"/>
+  <circle cx="185" cy="180" r="8" stroke="#c83f2f"/>
+  <circle cx="90" cy="200" r="45" stroke-dasharray="4 4"/>
+  <circle cx="90" cy="200" r="4"/>
+  <circle cx="390" cy="200" r="45" stroke-dasharray="4 4"/>
+  <circle cx="390" cy="200" r="4"/>
+  <line x1="180" y1="200" x2="390" y2="200" stroke-dasharray="5 5"/>
+  <text x="20" y="35" fill="#7f7668" font-family="monospace" font-size="10">SPEC: RIOT_CORE_V1</text>
+  <text x="20" y="50" fill="#7f7668" font-family="monospace" font-size="10">SCALE: NOT TO SCALE</text>
 </svg>
