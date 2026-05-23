@@ -12,6 +12,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://riotmotoco.com">
   <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -21,6 +22,7 @@
     </a>
     <nav class="site-nav" aria-label="Primary navigation">
       <a href="#builds">Builds</a>
+      <a href="#quote-builder">Quote Builder</a>
       <a href="#standard">Standard</a>
       <a href="#process">Process</a>
       <a href="#request">Request</a>
@@ -100,6 +102,71 @@
             <li>Configurable: CVT layout, mount plate, brake and wheel package</li>
           </ul>
         </article>
+      </div>
+    </section>
+
+    <section id="quote-builder" class="section configurator" aria-labelledby="quote-builder-title">
+      <div class="section-heading">
+        <p class="eyebrow">Parts-backed quote builder</p>
+        <h2 id="quote-builder-title">Build a parts sheet before we price the slot.</h2>
+      </div>
+      <div class="configurator-shell">
+        <div class="configurator-controls" aria-label="Build configuration controls">
+          <label class="field">
+            <span>Platform</span>
+            <select id="buildSelect">
+              <option value="PK80">Riot PK Open 80</option>
+              <option value="UTILITY79">Riot 79 Utility</option>
+              <option value="WIDOW212">Widowmaker 212</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Search parts</span>
+            <input id="partSearch" type="search" placeholder="chain, brake, clutch, fuel">
+          </label>
+          <div class="filter-row" id="systemFilters" aria-label="Part system filters"></div>
+        </div>
+
+        <div class="catalog-layout">
+          <div class="parts-panel">
+            <div class="panel-heading">
+              <h3>Available components</h3>
+              <span id="partsCount">Loading...</span>
+            </div>
+            <div id="partsList" class="parts-list" aria-live="polite"></div>
+          </div>
+
+          <aside class="quote-panel" aria-label="Quote request summary">
+            <div class="panel-heading">
+              <h3>Quote sheet</h3>
+              <span id="selectedCount">0 selected</span>
+            </div>
+            <div id="selectedParts" class="selected-parts">
+              <p class="muted-text">Select components to start a build sheet.</p>
+            </div>
+            <form id="quoteForm" class="quote-form">
+              <label class="field">
+                <span>Name</span>
+                <input name="name" autocomplete="name" required>
+              </label>
+              <label class="field">
+                <span>Email</span>
+                <input name="email" type="email" autocomplete="email" required>
+              </label>
+              <label class="field">
+                <span>Phone</span>
+                <input name="phone" autocomplete="tel">
+              </label>
+              <label class="field">
+                <span>Build notes</span>
+                <textarea name="message" rows="4" placeholder="Riding use, budget band, frame preference, must-have parts"></textarea>
+              </label>
+              <button class="button primary" type="submit">Send quote sheet</button>
+              <p id="quoteStatus" class="form-status" role="status"></p>
+            </form>
+            <p class="small-note">Supplier routing, raw costs, and source links stay internal. Customers see specs, tiers, compatibility, and final Riot quote pricing.</p>
+          </aside>
+        </div>
       </div>
     </section>
 

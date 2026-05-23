@@ -1,0 +1,3 @@
+# Ignore local admin secrets and sensitive files
+admin_secret.txt
+.env
