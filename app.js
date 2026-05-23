@@ -265,9 +265,10 @@
       const optionsHtml = tiers.map((t) => {
         const isOptActive = selectedTier === t.tier;
         const stockText = t.inventory > 0 ? `In Stock` : "Out of Stock";
+        const optionPrefix = part.item_id === "ALL-001" ? "" : `${t.badge}: `;
         return `
           <option value="${escapeHTML(t.tier)}" ${isOptActive ? "selected" : ""}>
-            ${escapeHTML(t.badge)}: ${escapeHTML(t.label)} — ${escapeHTML(t.price)} (${stockText})
+            ${escapeHTML(optionPrefix)}${escapeHTML(t.label)} — ${escapeHTML(t.price)} (${stockText})
           </option>
         `;
       }).join("");
@@ -377,17 +378,23 @@
     }
 
     selectedParts.innerHTML = items.map(({ part, tier }) => {
-      const badgeClass = {
+      const isFrame = part.item_id === "ALL-001";
+      
+      const badgeClass = isFrame ? "badge-premium" : ({
         cheap: "badge-cheap",
         mid: "badge-mid",
         premium: "badge-premium"
-      }[tier] || "badge-premium";
+      }[tier] || "badge-premium");
       
-      const label = {
+      const label = isFrame ? ({
+        cheap: "2.4L Standard",
+        mid: "3.4L Standard",
+        premium: "3.4L Fat-Tire"
+      }[tier] || "Chassis") : ({
         cheap: "Cheap OEM",
         mid: "Mid-Range",
         premium: "Riot Spec"
-      }[tier] || "Riot Spec";
+      }[tier] || "Riot Spec");
 
       return `
         <div class="selected-item">
