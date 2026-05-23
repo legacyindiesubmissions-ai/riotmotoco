@@ -375,19 +375,52 @@
     });
 
     const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    let totalText = "";
-    if (totalMin === totalMax) {
-      totalText = `$${formatPrice(totalMin)}`;
+    
+    if (state.selected.size > 0) {
+      const partsMin = totalMin;
+      const partsMax = totalMax;
+      const assemblyFee = 250.00;
+      const freightFee = 150.00;
+      
+      const partsText = partsMin === partsMax 
+        ? `$${formatPrice(partsMin)}` 
+        : `$${formatPrice(partsMin)} - $${formatPrice(partsMax)}`;
+        
+      const grandMin = partsMin + assemblyFee + freightFee;
+      const grandMax = partsMax + assemblyFee + freightFee;
+      
+      const totalText = grandMin === grandMax 
+        ? `$${formatPrice(grandMin)}` 
+        : `$${formatPrice(grandMin)} - $${formatPrice(grandMax)}`;
+        
+      html += `
+        <div class="picker-total-block">
+          <div class="picker-breakdown-row">
+            <span>Configured Components Total:</span>
+            <strong>${partsText}</strong>
+          </div>
+          <div class="picker-breakdown-row">
+            <span>Pro Assembly & Bench Testing:</span>
+            <strong>$${formatPrice(assemblyFee)}</strong>
+          </div>
+          <div class="picker-breakdown-row">
+            <span>Custom Crating & LTL Freight:</span>
+            <strong>$${formatPrice(freightFee)}</strong>
+          </div>
+          <div class="picker-total-row">
+            <span>Total Quote Estimate:</span>
+            <strong id="pickerTotalVal">${totalText}</strong>
+          </div>
+        </div>
+      </div>`;
     } else {
-      totalText = `$${formatPrice(totalMin)} - $${formatPrice(totalMax)}`;
+      html += `
+        <div class="picker-total-row">
+          <span>Estimated System Parts Total:</span>
+          <strong id="pickerTotalVal">$0.00</strong>
+        </div>
+      </div>`;
     }
-
-    html += `
-      <div class="picker-total-row">
-        <span>Estimated System Parts Total:</span>
-        <strong id="pickerTotalVal">${totalText}</strong>
-      </div>
-    </div>`;
 
     partsList.innerHTML = html;
   }
@@ -457,17 +490,42 @@
     });
 
     const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    let totalText = "";
-    if (totalMin === totalMax) {
-      totalText = `$${formatPrice(totalMin)}`;
-    } else {
-      totalText = `$${formatPrice(totalMin)} - $${formatPrice(totalMax)}`;
-    }
+    
+    const partsMin = totalMin;
+    const partsMax = totalMax;
+    const assemblyFee = 250.00;
+    const freightFee = 150.00;
+    
+    const partsText = partsMin === partsMax 
+      ? `$${formatPrice(partsMin)}` 
+      : `$${formatPrice(partsMin)} - $${formatPrice(partsMax)}`;
+      
+    const grandMin = partsMin + assemblyFee + freightFee;
+    const grandMax = partsMax + assemblyFee + freightFee;
+    
+    const totalText = grandMin === grandMax 
+      ? `$${formatPrice(grandMin)}` 
+      : `$${formatPrice(grandMin)} - $${formatPrice(grandMax)}`;
 
     if (sidebarTotal) {
       sidebarTotal.innerHTML = `
         <div class="sidebar-total-card">
-          <span class="total-label">Estimated Parts Total</span>
+          <div class="sidebar-total-breakdown">
+            <div class="breakdown-row">
+              <span>Configured Parts:</span>
+              <span>${partsText}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>Pro Assembly:</span>
+              <span>$${formatPrice(assemblyFee)}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>LTL Freight:</span>
+              <span>$${formatPrice(freightFee)}</span>
+            </div>
+          </div>
+          <div class="breakdown-divider"></div>
+          <span class="total-label">Total Quote Estimate</span>
           <span class="total-amount">${totalText}</span>
         </div>
       `;
@@ -534,8 +592,44 @@
     };
 
     try {
-      // Capture the submitted total price range before clearing selections
-      const successPrice = sidebarTotal ? sidebarTotal.querySelector(".total-amount").textContent : "$0.00";
+      // Capture the submitted components and calculate breakdown before clearing selections
+      const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      let totalMin = 0;
+      let totalMax = 0;
+      state.selected.forEach((entry) => {
+        const dbTiers = entry.part.cross_references || [];
+        const activeTier = dbTiers.find(t => t.quality_tier === entry.tier);
+        if (activeTier) {
+          const range = parsePriceRange(activeTier.price_estimate);
+          totalMin += range.min;
+          totalMax += range.max;
+        } else {
+          const fallbackTiers = getTiersForPart(entry.part);
+          const fallbackTier = fallbackTiers.find(t => t.tier === entry.tier);
+          if (fallbackTier) {
+            const priceStr = fallbackTier.tier === "cheap" ? "$0.00" : (fallbackTier.tier === "mid" ? "+$12.00" : "+$24.00");
+            const range = parsePriceRange(priceStr);
+            totalMin += range.min;
+            totalMax += range.max;
+          }
+        }
+      });
+      
+      const partsMin = totalMin;
+      const partsMax = totalMax;
+      const assemblyFee = 250.00;
+      const freightFee = 150.00;
+      
+      const partsText = partsMin === partsMax 
+        ? `$${formatPrice(partsMin)}` 
+        : `$${formatPrice(partsMin)} - $${formatPrice(partsMax)}`;
+        
+      const grandMin = partsMin + assemblyFee + freightFee;
+      const grandMax = partsMax + assemblyFee + freightFee;
+      
+      const totalText = grandMin === grandMax 
+        ? `$${formatPrice(grandMin)}` 
+        : `$${formatPrice(grandMin)} - $${formatPrice(grandMax)}`;
       
       const successParts = Array.from(state.selected.values()).map(({ part, tier }) => {
         const tierLabel = { cheap: "Cheap OEM", mid: "Mid-Range", premium: "Riot Spec" }[tier] || "Riot Spec";
@@ -546,13 +640,13 @@
           </div>
         `;
       }).join("");
-
+ 
       const result = await fetchJSON("/api/public/quote-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
+ 
       // Render the dedicated Success Landing Page view
       if (quoteSuccessSection) {
         quoteSuccessSection.innerHTML = `
@@ -565,10 +659,25 @@
             <p class="success-intro">
               Hey <strong>${escapeHTML(payload.name)}</strong>, we've registered your custom build request! A copy of this quote sheet has been sent to <strong>${escapeHTML(payload.email)}</strong>.
             </p>
-
+ 
             <div class="success-total-card">
+              <div class="sidebar-total-breakdown">
+                <div class="breakdown-row">
+                  <span>Configured Parts:</span>
+                  <span>${partsText}</span>
+                </div>
+                <div class="breakdown-row">
+                  <span>Pro Assembly:</span>
+                  <span>$${formatPrice(assemblyFee)}</span>
+                </div>
+                <div class="breakdown-row">
+                  <span>LTL Freight:</span>
+                  <span>$${formatPrice(freightFee)}</span>
+                </div>
+              </div>
+              <div class="breakdown-divider"></div>
               <span class="total-label">Your Submitted Quote</span>
-              <span class="total-amount">${escapeHTML(successPrice)}</span>
+              <span class="total-amount">${totalText}</span>
             </div>
 
             <div class="success-manifest-box">

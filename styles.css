@@ -851,6 +851,32 @@ h2 {
   box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.03);
 }
 
+.sidebar-total-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.breakdown-row span:last-child {
+  color: #00FF00;
+  font-weight: 600;
+}
+
+.breakdown-divider {
+  height: 1px;
+  background: rgba(0, 255, 0, 0.2);
+  margin: 6px 0;
+}
+
 .sidebar-total-card .total-label {
   font-size: 0.72rem;
   font-weight: 700;
@@ -864,6 +890,30 @@ h2 {
   font-weight: 800;
   color: #00FF00;
   text-shadow: 0 0 8px rgba(0, 255, 0, 0.15);
+}
+
+.picker-total-block {
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 2px solid var(--line);
+  padding: 16px 20px 0 20px;
+}
+
+.picker-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.88rem;
+}
+
+.picker-breakdown-row span {
+  color: var(--faint);
+  font-weight: 500;
+}
+
+.picker-breakdown-row strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .quote-form {
@@ -1153,6 +1203,12 @@ h2 {
   font-size: 1.8rem;
   font-weight: 900;
   color: var(--green);
+}
+
+.picker-total-block .picker-total-row {
+  border-top: none;
+  background: transparent;
+  padding: 16px 0 20px 0;
 }
 
 @media (max-width: 768px) {
