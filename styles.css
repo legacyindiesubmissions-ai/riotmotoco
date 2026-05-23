@@ -878,6 +878,109 @@ h2 {
   margin: 8px 0 0;
 }
 
+/* SUCCESS LANDING CARD */
+.success-landing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.success-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.success-icon {
+  font-size: 1.5rem;
+  text-shadow: 0 0 10px rgba(242, 183, 5, 0.4);
+}
+
+.success-intro {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+.success-intro strong {
+  color: var(--ink);
+}
+
+.success-total-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.12), rgba(0, 255, 0, 0.04));
+  border: 1px solid rgba(0, 255, 0, 0.35);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 255, 0, 0.05);
+}
+
+.success-total-card .total-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #88ff88;
+}
+
+.success-total-card .total-amount {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #00FF00;
+  text-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+}
+
+.success-manifest-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.success-manifest-box h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+
+.success-manifest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 4px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.success-part-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--faint);
+}
+
+.success-part-tier {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--yellow);
+}
+
+.success-btn {
+  margin-top: 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 990px) {
   .catalog-layout {
     grid-template-columns: 1fr;

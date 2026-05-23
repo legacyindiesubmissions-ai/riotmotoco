@@ -11,8 +11,8 @@
   <meta property="og:url" content="https://riotmotoco.com">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://riotmotoco.com">
-  <link rel="stylesheet" href="styles.css?v=7">
-  <script src="app.js?v=7" defer></script>
+  <link rel="stylesheet" href="styles.css?v=8">
+  <script src="app.js?v=8" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -134,35 +134,40 @@
           </div>
 
           <aside class="quote-panel" aria-label="Quote request summary">
-            <div class="panel-heading">
-              <h3>Quote sheet</h3>
-              <span id="selectedCount">0 selected</span>
+            <div id="quoteConfigSection">
+              <div class="panel-heading">
+                <h3>Quote sheet</h3>
+                <span id="selectedCount">0 selected</span>
+              </div>
+              <div id="selectedParts" class="selected-parts">
+                <p class="muted-text">Select components to start a build sheet.</p>
+              </div>
+              <div id="sidebarTotal" class="sidebar-total-block"></div>
+              <form id="quoteForm" class="quote-form">
+                <label class="field">
+                  <span>Name</span>
+                  <input name="name" autocomplete="name" required>
+                </label>
+                <label class="field">
+                  <span>Email</span>
+                  <input name="email" type="email" autocomplete="email" required>
+                </label>
+                <label class="field">
+                  <span>Phone</span>
+                  <input name="phone" autocomplete="tel">
+                </label>
+                <label class="field">
+                  <span>Build notes</span>
+                  <textarea name="message" rows="4" placeholder="Riding use, budget band, frame preference, must-have parts"></textarea>
+                </label>
+                <button class="button primary" type="submit">Send quote sheet</button>
+                <p id="quoteStatus" class="form-status" role="status"></p>
+              </form>
+              <p class="small-note">Supplier routing, raw costs, and source links stay internal. Customers see specs, tiers, compatibility, and final Riot quote pricing.</p>
             </div>
-            <div id="selectedParts" class="selected-parts">
-              <p class="muted-text">Select components to start a build sheet.</p>
+            <div id="quoteSuccessSection" class="quote-success-section" style="display: none;">
+              <!-- Dynamic Success Landing Page goes here -->
             </div>
-            <div id="sidebarTotal" class="sidebar-total-block"></div>
-            <form id="quoteForm" class="quote-form">
-              <label class="field">
-                <span>Name</span>
-                <input name="name" autocomplete="name" required>
-              </label>
-              <label class="field">
-                <span>Email</span>
-                <input name="email" type="email" autocomplete="email" required>
-              </label>
-              <label class="field">
-                <span>Phone</span>
-                <input name="phone" autocomplete="tel">
-              </label>
-              <label class="field">
-                <span>Build notes</span>
-                <textarea name="message" rows="4" placeholder="Riding use, budget band, frame preference, must-have parts"></textarea>
-              </label>
-              <button class="button primary" type="submit">Send quote sheet</button>
-              <p id="quoteStatus" class="form-status" role="status"></p>
-            </form>
-            <p class="small-note">Supplier routing, raw costs, and source links stay internal. Customers see specs, tiers, compatibility, and final Riot quote pricing.</p>
           </aside>
         </div>
       </div>

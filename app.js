@@ -14,6 +14,8 @@
   const sidebarTotal = document.getElementById("sidebarTotal");
   const quoteForm = document.getElementById("quoteForm");
   const quoteStatus = document.getElementById("quoteStatus");
+  const quoteConfigSection = document.getElementById("quoteConfigSection");
+  const quoteSuccessSection = document.getElementById("quoteSuccessSection");
 
   if (!buildSelect || !partsList || !quoteForm) {
     return;
@@ -532,12 +534,70 @@
     };
 
     try {
+      // Capture the submitted total price range before clearing selections
+      const successPrice = sidebarTotal ? sidebarTotal.querySelector(".total-amount").textContent : "$0.00";
+      
+      const successParts = Array.from(state.selected.values()).map(({ part, tier }) => {
+        const tierLabel = { cheap: "Cheap OEM", mid: "Mid-Range", premium: "Riot Spec" }[tier] || "Riot Spec";
+        return `
+          <div class="success-part-item">
+            <span>${escapeHTML(part.part)}</span>
+            <span class="success-part-tier">${escapeHTML(tierLabel)}</span>
+          </div>
+        `;
+      }).join("");
+
       const result = await fetchJSON("/api/public/quote-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      quoteStatus.textContent = `Quote sheet received. Request #${result.id}.`;
+
+      // Render the dedicated Success Landing Page view
+      if (quoteSuccessSection) {
+        quoteSuccessSection.innerHTML = `
+          <div class="success-landing-card">
+            <div class="success-header">
+              <span class="success-icon">⚡</span>
+              <h3>Quote Received!</h3>
+            </div>
+            
+            <p class="success-intro">
+              Hey <strong>${escapeHTML(payload.name)}</strong>, we've registered your custom build request! A copy of this quote sheet has been sent to <strong>${escapeHTML(payload.email)}</strong>.
+            </p>
+
+            <div class="success-total-card">
+              <span class="total-label">Your Submitted Quote</span>
+              <span class="total-amount">${escapeHTML(successPrice)}</span>
+            </div>
+
+            <div class="success-manifest-box">
+              <h4>Configured Components</h4>
+              <div class="success-manifest-list">
+                ${successParts}
+              </div>
+            </div>
+
+            <button type="button" id="btnConfigureNew" class="button primary success-btn">Configure Another Build</button>
+          </div>
+        `;
+
+        // Add action to the reset button
+        document.getElementById("btnConfigureNew").addEventListener("click", () => {
+          if (quoteSuccessSection && quoteConfigSection) {
+            quoteSuccessSection.style.display = "none";
+            quoteConfigSection.style.display = "block";
+          }
+        });
+      }
+
+      // Hide Configurator and Show Success View
+      if (quoteConfigSection && quoteSuccessSection) {
+        quoteConfigSection.style.display = "none";
+        quoteSuccessSection.style.display = "block";
+      }
+
+      // Reset the form and selection back to default state
       quoteForm.reset();
       state.selected.clear();
       renderSelected();
