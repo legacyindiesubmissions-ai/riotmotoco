@@ -453,7 +453,7 @@
       renderSelected();
       renderParts();
     } catch (error) {
-      const subject = encodeURIComponent($"Riot Moto Co. quote request - ${buildNames[buildSelect.value] || buildSelect.value}");
+      const subject = encodeURIComponent(`Riot Moto Co. quote request - ${buildNames[buildSelect.value] || buildSelect.value}`);
       
       const partListText = Array.from(state.selected.values()).map(({ part, tier }) => {
         const tierName = { cheap: "Cheap OEM", mid: "Mid-Range", premium: "Riot Spec" }[tier];
