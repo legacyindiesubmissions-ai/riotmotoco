@@ -34,6 +34,22 @@ body {
   line-height: 1.55;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url("assets/riot-moto-logo.png") center center / clamp(340px, 64vmin, 820px) auto no-repeat;
+  opacity: 0.1;
+  filter: saturate(0.92) contrast(1.05);
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
 a {
   color: inherit;
 }
@@ -62,8 +78,8 @@ a {
 }
 
 .brand-logo {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(243, 238, 226, 0.22), 0 0 18px rgba(200, 63, 47, 0.18);
