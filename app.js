@@ -146,9 +146,9 @@
   function getOptionLabel(part, ref) {
     if (part.item_id === "ALL-001") {
       return {
-        cheap: "CDH 2.4L Tank Frame (Standard 135mm Dropouts)",
-        mid: "CDH 3.4L Tank Frame (Standard 135mm Dropouts)",
-        premium: "CDH 3.4L Tank Frame (Wide 170mm Fat-Tire Dropouts)"
+        cheap: "PK80 Frame Reference - Review Required",
+        mid: "PK80 3.4L Frame Reference - Review Required",
+        premium: "Build-Specific Frame Lane - Review Required"
       }[ref.quality_tier] || (ref.public_sku || `RMC-${part.item_id}-${ref.quality_tier}`);
     }
     
@@ -233,12 +233,12 @@
       premiumLabel = "Hilliard Extreme / TAV 30 Spec";
       premiumDesc = "Genuine Hilliard Extreme Duty clutch or GoPowerSports 30-Series Torque Converter.";
     } else if (name.includes("frame")) {
-      cheapLabel = "Standard Cruiser Frame";
-      cheapDesc = "Stock bicycle frame (slotted dropouts, needs clamp-on adapter brackets).";
-      midLabel = "Upgraded Steel Cruiser";
-      midDesc = "Heavy-duty steel frame with disc mounts.";
-      premiumLabel = "CDH Motor-Ready Tank Frame";
-      premiumDesc = "2.4L/3.4L integrated-tank heavy cruiser frame designed for motor installations.";
+      cheapLabel = "Build-Specific Frame";
+      cheapDesc = "Frame fitment is selected by build lane, not by visual similarity.";
+      midLabel = "Verified Frame Package";
+      midDesc = "Frame, dropout, wheel, mount, and drive-path compatibility must be locked together.";
+      premiumLabel = "Riot Frame Package";
+      premiumDesc = "Highest-spec frame path only after PK80, 79cc jackshaft, or 212cc torque-converter fitment is verified.";
     } else if (name.includes("carburetor") || name.includes("carb")) {
       cheapLabel = "Generic Stock Carb";
       cheapDesc = "Unadjusted factory carburetor (prone to air leaks and rough idle).";
@@ -563,9 +563,9 @@
       }[tier] || "badge-premium");
       
       const label = isFrame ? ({
-        cheap: "2.4L Standard",
-        mid: "3.4L Standard",
-        premium: "3.4L Fat-Tire"
+        cheap: "Frame Review",
+        mid: "Frame Review",
+        premium: "Frame Review"
       }[tier] || "Chassis") : ({
         cheap: "Bare Bones",
         mid: "Street",
