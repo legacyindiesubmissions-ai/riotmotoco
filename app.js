@@ -71,10 +71,10 @@
 
   function tierDisplayName(tier) {
     return {
-      cheap: "Cheap OEM",
-      mid: "Mid-Range",
-      premium: "Riot Spec",
-    }[tier] || "Riot Spec";
+      cheap: "Bare Bones",
+      mid: "Street",
+      premium: "Riot",
+    }[tier] || "Riot";
   }
 
   function normalizeZip(value) {
@@ -268,11 +268,12 @@
       state.parts = [...shared, ...buildParts];
       state.systems = new Set(state.parts.map((part) => part.system).filter(Boolean));
       
-      // Auto-select required parts as Premium by default
+      // Auto-select required parts as selected default tier
+      const defaultTier = document.getElementById("tierSelectDefault")?.value || "premium";
       state.parts.forEach((part) => {
         const isRequired = part.required && part.required.toLowerCase() === "yes";
         if (isRequired && !state.selected.has(part.item_id)) {
-          state.selected.set(part.item_id, { part, tier: "premium" });
+          state.selected.set(part.item_id, { part, tier: defaultTier });
         }
       });
 
@@ -330,10 +331,10 @@
       if (dbTiers.length > 0) {
         tiers = dbTiers.map((ref) => {
           const badge = {
-            cheap: "Cheap OEM",
-            mid: "Mid-Range",
-            premium: "Riot Spec"
-          }[ref.quality_tier] || "Riot Spec";
+            cheap: "Bare Bones",
+            mid: "Street",
+            premium: "Riot"
+          }[ref.quality_tier] || "Riot";
           
           return {
             tier: ref.quality_tier,
@@ -523,10 +524,10 @@
         mid: "3.4L Standard",
         premium: "3.4L Fat-Tire"
       }[tier] || "Chassis") : ({
-        cheap: "Cheap OEM",
-        mid: "Mid-Range",
-        premium: "Riot Spec"
-      }[tier] || "Riot Spec");
+        cheap: "Bare Bones",
+        mid: "Street",
+        premium: "Riot"
+      }[tier] || "Riot");
 
       return `
         <div class="selected-item">
@@ -636,6 +637,17 @@
     loadParts();
   });
 
+  const tierSelectDefault = document.getElementById("tierSelectDefault");
+  if (tierSelectDefault) {
+    tierSelectDefault.addEventListener("change", () => {
+      state.selected.clear();
+      state.pricing = null;
+      state.pricingError = "";
+      renderSelected();
+      loadParts();
+    });
+  }
+
   if (quoteZipInput) {
     quoteZipInput.addEventListener("input", () => {
       quoteZipInput.value = normalizeZip(quoteZipInput.value);
@@ -663,7 +675,7 @@
     try {
       const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const successParts = Array.from(state.selected.values()).map(({ part, tier }) => {
-        const tierLabel = { cheap: "Cheap OEM", mid: "Mid-Range", premium: "Riot Spec" }[tier] || "Riot Spec";
+        const tierLabel = { cheap: "Bare Bones", mid: "Street", premium: "Riot" }[tier] || "Riot";
         return `
           <div class="success-part-item">
             <span>${escapeHTML(part.part)}</span>
@@ -761,10 +773,11 @@
       renderSelected();
       
       // Re-populate required parts
+      const defaultTier = document.getElementById("tierSelectDefault")?.value || "premium";
       state.parts.forEach((part) => {
         const isRequired = part.required && part.required.toLowerCase() === "yes";
         if (isRequired) {
-          state.selected.set(part.item_id, { part, tier: "premium" });
+          state.selected.set(part.item_id, { part, tier: defaultTier });
         }
       });
       renderSelected();
@@ -773,7 +786,7 @@
       const subject = encodeURIComponent(`Riot Moto Co. quote request - ${buildNames[buildSelect.value] || buildSelect.value}`);
       
       const partListText = Array.from(state.selected.values()).map(({ part, tier }) => {
-        const tierName = { cheap: "Cheap OEM", mid: "Mid-Range", premium: "Riot Spec" }[tier];
+        const tierName = { cheap: "Bare Bones", mid: "Street", premium: "Riot" }[tier];
         return `- ${part.part} (${part.item_id}) -> Tier: ${tierName}`;
       }).join("\n");
 
