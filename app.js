@@ -1,6 +1,6 @@
 (function () {
   const apiBase = window.RIOT_API_BASE || (
-    location.hostname === "127.0.0.1" || location.hostname === "localhost"
+    location.hostname === "127.0.0.1" || location.hostname === "localhost" || location.protocol === "file:" || !location.hostname
       ? "http://127.0.0.1:5066"
       : "https://api.riotmotoco.com"
   );
