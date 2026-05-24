@@ -506,7 +506,7 @@
             <strong>$${formatPrice(state.pricing.assembly_fee)}</strong>
           </div>
           <div class="picker-breakdown-row">
-            <span>Buffered LTL Freight:</span>
+            <span>UPS / FedEx Ground Shipping:</span>
             <strong>${pricingManualReview ? "Manual review required" : `$${formatPrice(state.pricing.freight_fee)}`}</strong>
           </div>
           ${pricingManualReview ? `<div class="picker-breakdown-row"><span>Freight Review:</span><strong>${escapeHTML(state.pricing.manual_review_note || "We will follow up with a verified shipping quote.")}</strong></div>` : ""}
@@ -615,7 +615,7 @@
                 <span>$${formatPrice(state.pricing.assembly_fee)}</span>
               </div>
               <div class="breakdown-row">
-                <span>Buffered LTL Freight:</span>
+                <span>UPS / FedEx Ground Shipping:</span>
                 <span>${pricingManualReview ? "Manual review required" : `$${formatPrice(state.pricing.freight_fee)}`}</span>
               </div>
               ${pricingManualReview ? `<div class="breakdown-row"><span>Freight Review:</span><span>${escapeHTML(state.pricing.manual_review_note || "We will follow up with a verified shipping quote.")}</span></div>` : ""}
@@ -652,6 +652,18 @@
           ? `$${formatPrice(localSumMin)}`
           : `$${formatPrice(localSumMin)} - $${formatPrice(localSumMax)}`;
 
+        // Upfront shipping & assembly estimates
+        const estAssembly = 250.00;
+        const estShipMin = 125.00;
+        const estShipMax = 210.00;
+
+        const estGrandMin = localSumMin + estAssembly + estShipMin;
+        const estGrandMax = localSumMax + estAssembly + estShipMax;
+
+        const estGrandText = estGrandMin === estGrandMax
+          ? `$${formatPrice(estGrandMin)}`
+          : `$${formatPrice(estGrandMin)} - $${formatPrice(estGrandMax)}`;
+
         sidebarTotal.innerHTML = `
           <div class="sidebar-total-card">
             <div class="sidebar-total-breakdown">
@@ -659,10 +671,21 @@
                 <span>Configured Parts:</span>
                 <span>${localSumText}</span>
               </div>
+              <div class="breakdown-row">
+                <span>Pro Assembly:</span>
+                <span>$${formatPrice(estAssembly)}</span>
+              </div>
+              <div class="breakdown-row">
+                <span>UPS / FedEx Ground (Est.):</span>
+                <span>$${formatPrice(estShipMin)} - $${formatPrice(estShipMax)}</span>
+              </div>
             </div>
             <div class="breakdown-divider"></div>
             <span class="total-label">Total Quote Estimate</span>
-            <span class="total-amount">${escapeHTML(state.pricingError || "Enter delivery ZIP to price freight.")}</span>
+            <span class="total-amount">${estGrandText}</span>
+            <div style="font-size: 10px; color: #888888; margin-top: 8px; text-align: center; line-height: 1.3;">
+              * Enter your Delivery ZIP code below to calculate your exact Ground shipping rate.
+            </div>
           </div>
         `;
       }
@@ -820,7 +843,7 @@
                   <span>${pricing ? `$${formatPrice(pricing.assembly_fee)}` : "Unavailable"}</span>
                 </div>
                 <div class="breakdown-row">
-                  <span>Buffered LTL Freight:</span>
+                  <span>UPS / FedEx Ground Shipping:</span>
                   <span>${pricing ? (pricingManualReview ? "Manual review required" : `$${formatPrice(pricing.freight_fee)}`) : "Unavailable"}</span>
                 </div>
                 ${pricingManualReview ? `<div class="breakdown-row"><span>Freight Review:</span><span>${escapeHTML(pricing.manual_review_note || "We will follow up with a verified shipping quote.")}</span></div>` : ""}
