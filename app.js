@@ -146,9 +146,9 @@
   function getOptionLabel(part, ref) {
     if (part.item_id === "ALL-001") {
       return {
-        cheap: "PK80 Frame Reference - Review Required",
-        mid: "PK80 3.4L Frame Reference - Review Required",
-        premium: "Build-Specific Frame Lane - Review Required"
+        cheap: "PK80 Tank Frame Package",
+        mid: "PK80 3.4L Tank Frame Package",
+        premium: "Build-Matched Chassis Package"
       }[ref.quality_tier] || (ref.public_sku || `RMC-${part.item_id}-${ref.quality_tier}`);
     }
     
