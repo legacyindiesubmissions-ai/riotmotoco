@@ -654,8 +654,8 @@
 
         // Upfront shipping & assembly estimates
         const estAssembly = 250.00;
-        const estShipMin = 125.00;
-        const estShipMax = 210.00;
+        const estShipMin = 85.00;
+        const estShipMax = 140.00;
 
         const estGrandMin = localSumMin + estAssembly + estShipMin;
         const estGrandMax = localSumMax + estAssembly + estShipMax;
