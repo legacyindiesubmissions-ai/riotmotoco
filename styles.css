@@ -61,15 +61,12 @@ a {
   text-transform: uppercase;
 }
 
-.brand-mark {
-  display: grid;
+.brand-logo {
   width: 36px;
   height: 36px;
-  place-items: center;
-  color: #15120b;
-  background: var(--yellow);
-  border: 2px solid #33270b;
-  transform: skew(-8deg);
+  object-fit: contain;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(243, 238, 226, 0.22), 0 0 18px rgba(200, 63, 47, 0.18);
 }
 
 .site-nav {
@@ -1225,4 +1222,3 @@ h2 {
     justify-content: flex-start;
   }
 }
-
