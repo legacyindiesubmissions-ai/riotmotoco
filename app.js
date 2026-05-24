@@ -640,11 +640,26 @@
   const tierSelectDefault = document.getElementById("tierSelectDefault");
   if (tierSelectDefault) {
     tierSelectDefault.addEventListener("change", () => {
-      state.selected.clear();
+      const defaultTier = tierSelectDefault.value;
       state.pricing = null;
       state.pricingError = "";
+
+      // Update all currently selected parts to use the new default tier
+      state.selected.forEach((entry, key) => {
+        state.selected.set(key, { part: entry.part, tier: defaultTier });
+      });
+
+      // Re-populate any required parts that weren't selected
+      state.parts.forEach((part) => {
+        const isRequired = part.required && part.required.toLowerCase() === "yes";
+        if (isRequired && !state.selected.has(part.item_id)) {
+          state.selected.set(part.item_id, { part, tier: defaultTier });
+        }
+      });
+
+      renderParts();
       renderSelected();
-      loadParts();
+      refreshPricing();
     });
   }
 
