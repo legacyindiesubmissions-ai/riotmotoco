@@ -355,7 +355,20 @@
       }
 
       // Find details of the currently selected tier
-      const activeTierDetails = tiers.find(t => t.tier === selectedTier);
+      let activeTierDetails = tiers.find(t => t.tier === selectedTier);
+
+      // Smart database fallback for components (like spark plugs and frames) missing the chosen tier
+      if (!activeTierDetails && selectedTier !== "none" && tiers.length > 0) {
+        activeTierDetails = tiers.find(t => t.tier === "premium") || 
+                            tiers.find(t => t.tier === "mid") || 
+                            tiers.find(t => t.tier === "cheap") || 
+                            tiers[0];
+        
+        // Sync selected tier in memory to match the fallback
+        if (selection && activeTierDetails) {
+          selection.tier = activeTierDetails.tier;
+        }
+      }
 
       // Render Dropdown options
       const optionsHtml = tiers.map((t) => {
@@ -428,7 +441,37 @@
     const formatPrice = (val) => val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     if (state.selected.size > 0) {
+      let localSumMin = 0;
+      let localSumMax = 0;
+      state.selected.forEach((entry) => {
+        const dbTiers = entry.part.cross_references || [];
+        let priceStr = "";
+        if (dbTiers.length > 0) {
+          const ref = dbTiers.find(t => t.quality_tier === entry.tier);
+          if (ref) {
+            priceStr = ref.price_estimate;
+          }
+        }
+        if (!priceStr) {
+          const fallback = getTiersForPart(entry.part).find(t => t.tier === entry.tier);
+          if (fallback) {
+            priceStr = fallback.tier === "cheap" ? "$0.00" : (fallback.tier === "mid" ? "+$12.00" : "+$24.00");
+          }
+        }
+        const range = parsePriceRange(priceStr);
+        localSumMin += range.min;
+        localSumMax += range.max;
+      });
+
+      const localSumText = localSumMin === localSumMax
+        ? `$${formatPrice(localSumMin)}`
+        : `$${formatPrice(localSumMin)} - $${formatPrice(localSumMax)}`;
+
       let pricingHtml = `
+        <div class="picker-breakdown-row">
+          <span>Configured Components Total:</span>
+          <strong>${localSumText}</strong>
+        </div>
         <div class="picker-total-row">
           <span>Total Quote Estimate:</span>
           <strong id="pickerTotalVal">Enter delivery ZIP to price freight.</strong>
@@ -583,8 +626,41 @@
           </div>
         `;
       } else {
+        let localSumMin = 0;
+        let localSumMax = 0;
+        state.selected.forEach((entry) => {
+          const dbTiers = entry.part.cross_references || [];
+          let priceStr = "";
+          if (dbTiers.length > 0) {
+            const ref = dbTiers.find(t => t.quality_tier === entry.tier);
+            if (ref) {
+              priceStr = ref.price_estimate;
+            }
+          }
+          if (!priceStr) {
+            const fallback = getTiersForPart(entry.part).find(t => t.tier === entry.tier);
+            if (fallback) {
+              priceStr = fallback.tier === "cheap" ? "$0.00" : (fallback.tier === "mid" ? "+$12.00" : "+$24.00");
+            }
+          }
+          const range = parsePriceRange(priceStr);
+          localSumMin += range.min;
+          localSumMax += range.max;
+        });
+
+        const localSumText = localSumMin === localSumMax
+          ? `$${formatPrice(localSumMin)}`
+          : `$${formatPrice(localSumMin)} - $${formatPrice(localSumMax)}`;
+
         sidebarTotal.innerHTML = `
           <div class="sidebar-total-card">
+            <div class="sidebar-total-breakdown">
+              <div class="breakdown-row">
+                <span>Configured Parts:</span>
+                <span>${localSumText}</span>
+              </div>
+            </div>
+            <div class="breakdown-divider"></div>
             <span class="total-label">Total Quote Estimate</span>
             <span class="total-amount">${escapeHTML(state.pricingError || "Enter delivery ZIP to price freight.")}</span>
           </div>
