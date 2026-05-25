@@ -36,7 +36,8 @@
   const buildNames = {
     PK80: "Riot PK Open 80",
     UTILITY79: "Riot 79 Utility",
-    WIDOW212: "Riot Cub 125",
+    WIDOW212: "Widowmaker 212",
+    CUB125: "Riot Cub 125",
     MOPED70: "Riot Moped",
   };
 
@@ -264,7 +265,7 @@
     partsCount.textContent = "Loading...";
 
     try {
-      const shared = build === "MOPED70"
+      const shared = (build === "MOPED70" || build === "CUB125")
         ? []
         : await fetchJSON(`/api/public/parts?build=ALL&${params.toString()}`);
       const buildParts = await fetchJSON(`/api/public/parts?build=${encodeURIComponent(build)}&${params.toString()}`);
