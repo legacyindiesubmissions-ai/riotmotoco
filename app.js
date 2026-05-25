@@ -672,7 +672,7 @@
           : `$${formatPrice(localSumMin)} - $${formatPrice(localSumMax)}`;
 
         // Upfront shipping & assembly estimates
-        const estAssembly = 250.00;
+        const estAssembly = buildSelect.value === "MOPED70" ? 150.00 : 250.00;
         const estShipMin = 85.00;
         const estShipMax = 140.00;
 
