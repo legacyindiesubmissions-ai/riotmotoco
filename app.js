@@ -87,6 +87,22 @@
     return Array.from(state.selected.entries()).map(([id, entry]) => `${id}:${entry.tier}`);
   }
 
+  function isCubBuild(build) {
+    return build === "CUB125";
+  }
+
+  function tierForPart(part, tier) {
+    if (part.item_id === "CUB125-001") {
+      return "premium";
+    }
+    return tier;
+  }
+
+  function shouldAutoSelectPart(build, part) {
+    const isRequired = part.required && part.required.toLowerCase() === "yes";
+    return isRequired || isCubBuild(build);
+  }
+
   async function refreshPricing() {
     const selectedItems = getSelectedItemsPayload();
     const shippingZip = normalizeZip(quoteZipInput ? quoteZipInput.value : "");
@@ -275,9 +291,8 @@
       // Auto-select required parts as selected default tier
       const defaultTier = document.getElementById("tierSelectDefault")?.value || "premium";
       state.parts.forEach((part) => {
-        const isRequired = part.required && part.required.toLowerCase() === "yes";
-        if (isRequired && !state.selected.has(part.item_id)) {
-          state.selected.set(part.item_id, { part, tier: defaultTier });
+        if (shouldAutoSelectPart(build, part) && !state.selected.has(part.item_id)) {
+          state.selected.set(part.item_id, { part, tier: tierForPart(part, defaultTier) });
         }
       });
 
@@ -749,14 +764,14 @@
 
       // Update all currently selected parts to use the new default tier
       state.selected.forEach((entry, key) => {
-        state.selected.set(key, { part: entry.part, tier: defaultTier });
+        state.selected.set(key, { part: entry.part, tier: tierForPart(entry.part, defaultTier) });
       });
 
-      // Re-populate any required parts that weren't selected
+      // Re-populate required parts, and for Cub 125 apply the build tier to all upgrade categories.
+      const build = buildSelect.value;
       state.parts.forEach((part) => {
-        const isRequired = part.required && part.required.toLowerCase() === "yes";
-        if (isRequired && !state.selected.has(part.item_id)) {
-          state.selected.set(part.item_id, { part, tier: defaultTier });
+        if (shouldAutoSelectPart(build, part) && !state.selected.has(part.item_id)) {
+          state.selected.set(part.item_id, { part, tier: tierForPart(part, defaultTier) });
         }
       });
 
@@ -893,9 +908,8 @@
       // Re-populate required parts
       const defaultTier = document.getElementById("tierSelectDefault")?.value || "premium";
       state.parts.forEach((part) => {
-        const isRequired = part.required && part.required.toLowerCase() === "yes";
-        if (isRequired) {
-          state.selected.set(part.item_id, { part, tier: defaultTier });
+        if (shouldAutoSelectPart(buildSelect.value, part)) {
+          state.selected.set(part.item_id, { part, tier: tierForPart(part, defaultTier) });
         }
       });
       renderSelected();
