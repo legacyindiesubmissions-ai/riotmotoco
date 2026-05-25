@@ -87,12 +87,12 @@
     return Array.from(state.selected.entries()).map(([id, entry]) => `${id}:${entry.tier}`);
   }
 
-  function isCubBuild(build) {
-    return build === "CUB125";
+  function isPackageTierBuild(build) {
+    return build === "CUB125" || build === "MOPED70";
   }
 
   function tierForPart(part, tier) {
-    if (part.item_id === "CUB125-001") {
+    if (part.item_id === "CUB125-001" || part.item_id === "MOPED70-001") {
       return "premium";
     }
     return tier;
@@ -100,7 +100,7 @@
 
   function shouldAutoSelectPart(build, part) {
     const isRequired = part.required && part.required.toLowerCase() === "yes";
-    return isRequired || isCubBuild(build);
+    return isRequired || isPackageTierBuild(build);
   }
 
   async function refreshPricing() {
