@@ -6,7 +6,7 @@ Static GitHub Pages launch site for `riotmotoco.com`.
 
 - `index.html` - landing page and build request flow.
 - `styles.css` - responsive industrial visual system.
-- `assets/riot-frame-blueprint.svg` - hero visual.
+- `assets/riot-frame-geometry.png` - hero visual.
 - `CNAME` - GitHub Pages custom domain file.
 - `robots.txt` and `sitemap.xml` - basic crawler metadata.
 
