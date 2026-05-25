@@ -36,7 +36,8 @@
   const buildNames = {
     PK80: "Riot PK Open 80",
     UTILITY79: "Riot 79 Utility",
-    WIDOW212: "Widowmaker 212",
+    WIDOW212: "Riot Cub 125",
+    MOPED70: "Riot Moped",
   };
 
   function escapeHTML(value) {
@@ -263,7 +264,9 @@
     partsCount.textContent = "Loading...";
 
     try {
-      const shared = await fetchJSON(`/api/public/parts?build=ALL&${params.toString()}`);
+      const shared = build === "MOPED70"
+        ? []
+        : await fetchJSON(`/api/public/parts?build=ALL&${params.toString()}`);
       const buildParts = await fetchJSON(`/api/public/parts?build=${encodeURIComponent(build)}&${params.toString()}`);
       state.parts = [...shared, ...buildParts];
       state.systems = new Set(state.parts.map((part) => part.system).filter(Boolean));
