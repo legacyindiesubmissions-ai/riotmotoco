@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Service Contract | Riot Moto Co.</title>
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" type="image/png" href="/assets/riot-moto-logo-mark.png">
+  <link rel="stylesheet" href="/styles.css?v=14">
+  <style>
+    /* Private contract page: no analytics tag on purpose, the URL carries a secret token. */
+    .contract-wrap { max-width: 860px; margin: 0 auto; padding: 36px clamp(16px, 4vw, 36px) 72px; }
+    .contract-state { padding: 28px; border: 1px solid var(--line); background: rgba(27, 25, 20, 0.92); }
+    .contract-state h1 { margin: 0 0 10px; font-size: clamp(1.6rem, 4vw, 2.2rem); }
+    .contract-paper { border: 1px solid rgba(242, 183, 5, 0.36); background: rgba(27, 25, 20, 0.94); padding: clamp(20px, 4vw, 40px); }
+    .contract-head { border-bottom: 3px solid var(--yellow); padding-bottom: 16px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+    .contract-head h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 2.6rem); }
+    .contract-sub { color: var(--yellow); font-weight: 800; letter-spacing: 0.06em; margin: 4px 0; }
+    .contract-contact { color: var(--muted); margin: 2px 0; font-size: 0.92rem; }
+    .contract-title { align-self: flex-start; padding: 8px 14px; background: var(--ink); color: var(--bg); font-weight: 900; letter-spacing: 0.06em; font-size: 0.85rem; }
+    .contract-meta { text-align: right; color: var(--muted); font-size: 0.92rem; }
+    .contract-details { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; padding: 16px; border: 1px solid var(--line); background: var(--panel-2); margin-bottom: 20px; }
+    .contract-details div.wide { grid-column: 1 / -1; }
+    .contract-details dt { font-size: 0.75rem; font-weight: 900; color: var(--yellow); letter-spacing: 0.08em; text-transform: uppercase; }
+    .contract-details dd { margin: 4px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .contract-rates { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; padding: 12px 16px; background: var(--ink); color: var(--bg); font-weight: 800; margin-bottom: 24px; }
+    .contract-rates span b { color: #7a5600; }
+    .contract-paper h2 { font-size: 1rem; letter-spacing: 0.06em; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+    .contract-paper p { margin: 8px 0; }
+    .contract-choices { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; padding: 14px 16px; border-left: 4px solid var(--yellow); background: var(--panel-2); }
+    .contract-choice { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+    .contract-choice input[type=radio], .contract-agree input[type=checkbox] { margin-top: 5px; accent-color: var(--yellow); }
+    .contract-choice .amount { width: 110px; min-height: 36px; padding: 6px 8px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+    .contract-term strong { color: var(--ink); }
+    .contract-sign { margin-top: 12px; padding: 18px; border: 1px solid var(--line); background: var(--panel-2); display: flex; flex-direction: column; gap: 16px; }
+    .contract-agree { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+    .contract-sign .field input { font-size: 1.1rem; }
+    .contract-signed pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 0.85rem/1.5 Consolas, Menlo, monospace; padding: 16px; background: var(--panel-2); border: 1px solid var(--line); }
+    .contract-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .contract-error { color: #ff9a8b; }
+    @media (max-width: 640px) {
+      .contract-details { grid-template-columns: 1fr; }
+      .contract-meta { text-align: left; }
+    }
+    @media print {
+      body { background: #fff; color: #000; }
+      body::before, .site-header, .no-print { display: none !important; }
+      .contract-wrap { padding: 0; max-width: none; }
+      .contract-paper, .contract-state, .contract-details, .contract-choices, .contract-sign, .contract-signed pre { border-color: #999; background: #fff; color: #000; }
+      .contract-head h1, .contract-paper h2, .contract-term strong, .contract-details dd { color: #000; }
+      .contract-sub, .contract-details dt { color: #7a5600; }
+      .contract-contact, .contract-meta { color: #333; }
+      .contract-rates, .contract-title { background: #eee; color: #000; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Riot Moto Co. home">
+      <img class="brand-logo" src="/assets/riot-moto-logo-mark.png" alt="Riot Moto Co. Logo Mark" width="48" height="48">
+      <span>Riot Moto Co.</span>
+    </a>
+  </header>
+
+  <main class="contract-wrap">
+    <div id="contractState" class="contract-state" role="status" aria-live="polite">
+      <h1>Loading your contract...</h1>
+    </div>
+    <div id="contractRoot" hidden></div>
+  </main>
+
+  <script>
+    (function () {
+      var host = window.location.hostname;
+      var apiBase = window.RIOT_API_BASE || (
+        host === "localhost" || host === "127.0.0.1" ? "http://127.0.0.1:5066" : "https://api.riotmotoco.com"
+      );
+      var token = new URLSearchParams(window.location.search).get("t") || "";
+      var stateBox = document.getElementById("contractState");
+      var root = document.getElementById("contractRoot");
+      var PHONE = "(315) 350-0575";
+
+      function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) { node.className = className; }
+        if (text !== undefined) { node.textContent = text; }
+        return node;
+      }
+
+      function showState(title, message, isError) {
+        root.hidden = true;
+        stateBox.hidden = false;
+        stateBox.textContent = "";
+        stateBox.appendChild(el("h1", isError ? "contract-error" : "", title));
+        if (message) { stateBox.appendChild(el("p", "", message)); }
+      }
+
+      function problem(status) {
+        if (status === 404) { return ["Contract link not found", "This link isn't valid. Please check the link in your email, or call " + PHONE + "."]; }
+        if (status === 410) { return ["This contract link has expired", "For your security these links expire. Please call " + PHONE + " and we'll send a new one."]; }
+        if (status === 429) { return ["Too many attempts", "Please wait a bit and try again, or call " + PHONE + "."]; }
+        return ["We couldn't load the contract", "Please try again in a moment, or call " + PHONE + "."];
+      }
+
+      function load() {
+        if (!token) { var p = problem(404); showState(p[0], p[1], true); return; }
+        fetch(apiBase + "/api/public/repair-contract?token=" + encodeURIComponent(token))
+          .then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (body) { return { status: response.status, ok: response.ok, body: body }; });
+          })
+          .then(function (result) {
+            if (!result.ok) { var p = problem(result.status); showState(p[0], p[1], true); return; }
+            render(result.body);
+          })
+          .catch(function () { var p = problem(0); showState(p[0], p[1], true); });
+      }
+
+      function header(doc, request) {
+        var head = el("div", "contract-head");
+        var left = el("div");
+        left.appendChild(el("h1", "", doc.business));
+        left.appendChild(el("p", "contract-sub", doc.subtitle));
+        doc.contact_lines.forEach(function (line) { left.appendChild(el("p", "contract-contact", line)); });
+        var right = el("div");
+        right.appendChild(el("div", "contract-title", doc.title));
+        var meta = el("div", "contract-meta");
+        meta.appendChild(document.createTextNode("Work Order #: " + request.work_order));
+        right.appendChild(meta);
+        head.appendChild(left);
+        head.appendChild(right);
+        return head;
+      }
+
+      function details(request) {
+        var dl = el("dl", "contract-details");
+        function item(label, value, wide) {
+          var wrap = el("div", wide ? "wide" : "");
+          wrap.appendChild(el("dt", "", label));
+          wrap.appendChild(el("dd", "", value || "(not provided)"));
+          dl.appendChild(wrap);
+        }
+        item("Customer name", request.name, false);
+        item("Phone & email", [request.phone, request.email].filter(Boolean).join("   "), false);
+        item("Equipment / engine (year, make, model, engine type)", request.equipment, true);
+        item("Requested work scope & reported issues", request.issue, true);
+        return dl;
+      }
+
+      function rates(doc) {
+        var bar = el("div", "contract-rates");
+        doc.rates.forEach(function (rate) {
+          var span = el("span", "", rate.label + ": ");
+          span.appendChild(el("b", "", rate.value));
+          bar.appendChild(span);
+        });
+        return bar;
+      }
+
+      function choice(type, name, value, checked, title, text) {
+        var label = el("label", "contract-choice");
+        var input = document.createElement("input");
+        input.type = type; input.name = name; input.value = value; input.checked = !!checked;
+        label.appendChild(input);
+        var body = el("span");
+        body.appendChild(el("strong", "", title + " "));
+        body.appendChild(document.createTextNode(text));
+        label.appendChild(body);
+        return { label: label, input: input, body: body };
+      }
+
+      function render(view) {
+        stateBox.hidden = true;
+        root.hidden = false;
+        root.textContent = "";
+        if (view.state === "signed") { renderSigned(view); return; }
+        var doc = view.contract, request = view.request;
+        var paper = el("form", "contract-paper");
+        paper.noValidate = true;
+        paper.appendChild(header(doc, request));
+        paper.appendChild(details(request));
+        paper.appendChild(rates(doc));
+
+        paper.appendChild(el("h2", "", doc.estimate_heading));
+        paper.appendChild(el("p", "", doc.estimate_intro));
+
+        var choices = el("div", "contract-choices");
+        var standard = choice("radio", "service", "standard", request.service !== "express", doc.standard_option.title, doc.standard_option.text);
+        var express = choice("radio", "service", "express", request.service === "express", doc.express_option.title, doc.express_option.text);
+        choices.appendChild(standard.label);
+        choices.appendChild(express.label);
+
+        var estAmount = choice("radio", "estimate", "amount", true, doc.estimate_option.title, doc.estimate_option.text + " $");
+        var amount = document.createElement("input");
+        amount.type = "number"; amount.className = "amount"; amount.min = "0"; amount.max = "100000"; amount.step = "1";
+        amount.value = String(view.default_estimate_amount); amount.setAttribute("aria-label", "Written estimate threshold in dollars");
+        estAmount.body.appendChild(amount);
+        var estWaive = choice("radio", "estimate", "waived", false, doc.estimate_option.title, "Waive the written estimate.");
+        choices.appendChild(estAmount.label);
+        choices.appendChild(estWaive.label);
+        paper.appendChild(choices);
+
+        paper.appendChild(el("h2", "", doc.terms_heading));
+        doc.terms.forEach(function (term) {
+          var p = el("p", "contract-term");
+          p.appendChild(el("strong", "", term.title + " "));
+          p.appendChild(document.createTextNode(term.text));
+          paper.appendChild(p);
+        });
+
+        paper.appendChild(el("h2", "", doc.authorization_heading));
+        var sign = el("div", "contract-sign");
+        var agreeLabel = el("label", "contract-agree");
+        var agree = document.createElement("input");
+        agree.type = "checkbox";
+        agreeLabel.appendChild(agree);
+        agreeLabel.appendChild(el("span", "", "I have read this contract, I agree to its terms, and I understand that typing my name below is my legal electronic signature."));
+        sign.appendChild(agreeLabel);
+        var nameField = el("label", "field");
+        nameField.appendChild(el("span", "", "Type your full name to sign"));
+        var nameInput = document.createElement("input");
+        nameInput.autocomplete = "name"; nameInput.maxLength = 100;
+        nameField.appendChild(nameInput);
+        sign.appendChild(nameField);
+        sign.appendChild(el("p", "small-note", "Date: " + new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) + ". Riot Moto Co. issued this contract electronically. This link expires " + view.expires_at + "."));
+        var submit = el("button", "button primary", "Sign contract");
+        submit.type = "submit";
+        sign.appendChild(submit);
+        var status = el("p", "form-status");
+        status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
+        sign.appendChild(status);
+        paper.appendChild(sign);
+        root.appendChild(paper);
+
+        paper.addEventListener("submit", function (event) {
+          event.preventDefault();
+          var name = nameInput.value.trim();
+          if (!agree.checked) { status.textContent = "Please tick the box to agree to the contract."; return; }
+          if (name.length < 2) { status.textContent = "Please type your full name to sign."; return; }
+          var mode = estWaive.input.checked ? "waived" : "amount";
+          var amountValue = parseFloat(amount.value);
+          if (mode === "amount" && (isNaN(amountValue) || amountValue < 0)) { status.textContent = "Please enter the written estimate amount (or choose to waive it)."; return; }
+          submit.disabled = true;
+          status.textContent = "Signing...";
+          fetch(apiBase + "/api/public/repair-contract/sign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: token,
+              signature_name: name,
+              agree: true,
+              service: express.input.checked ? "express" : "standard",
+              estimate_mode: mode,
+              estimate_amount: mode === "amount" ? amountValue : 0
+            })
+          }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (body) { return { status: response.status, ok: response.ok, body: body }; });
+          }).then(function (result) {
+            if (result.ok) { render(result.body); window.scrollTo(0, 0); return; }
+            if (result.status === 409) { load(); return; }
+            if (result.status === 400 && result.body && result.body.error) { status.textContent = result.body.error + "."; submit.disabled = false; return; }
+            if (result.status === 404 || result.status === 410 || result.status === 429) { var p = problem(result.status); showState(p[0], p[1], true); return; }
+            status.textContent = "We couldn't record your signature. Please try again, or call " + PHONE + ".";
+            submit.disabled = false;
+          }).catch(function () {
+            status.textContent = "We couldn't reach the server. Please try again, or call " + PHONE + ".";
+            submit.disabled = false;
+          });
+        });
+      }
+
+      function renderSigned(view) {
+        var doc = view.contract, signed = view.signed;
+        var wrap = el("div", "contract-signed");
+        var banner = el("div", "contract-state");
+        banner.appendChild(el("h1", "", "Contract signed"));
+        banner.appendChild(el("p", "", "Signed by " + signed.name + " on " + signed.signed_at + ". " + signed.service + ". We've emailed a copy if you gave us an email address. Riot Moto Co. will start work and contact you."));
+        var actions = el("div", "contract-actions no-print");
+        var print = el("button", "button primary", "Print / Save as PDF");
+        print.type = "button";
+        print.addEventListener("click", function () { window.print(); });
+        actions.appendChild(print);
+        banner.appendChild(actions);
+        wrap.appendChild(banner);
+        var paper = el("div", "contract-paper");
+        paper.style.marginTop = "20px";
+        paper.appendChild(el("h2", "", doc.title + " — signed copy"));
+        paper.appendChild(el("pre", "", signed.text));
+        wrap.appendChild(paper);
+        root.appendChild(wrap);
+      }
+
+      load();
+    })();
+  </script>
+</body>
+</html>
