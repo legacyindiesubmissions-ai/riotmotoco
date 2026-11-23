@@ -1238,3 +1238,29 @@ h2 {
     justify-content: flex-start;
   }
 }
+
+/* Local repair banner at the top of the homepage (2026-11-23): repair is the shop's day-to-day work,
+   and visitors searching for it landed on the custom-build pitch and left. */
+.repair-callout {
+  max-width: var(--max);
+  margin: 18px auto 0;
+  padding: 18px 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 28px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--yellow);
+  border-radius: 10px;
+}
+.repair-callout-copy { flex: 1 1 380px; min-width: 0; }
+.repair-callout h2 { margin: 2px 0 6px; font-size: clamp(1.25rem, 2.4vw, 1.6rem); }
+.repair-callout p { margin: 0; color: var(--muted); }
+.repair-callout .eyebrow { color: var(--yellow); }
+.repair-callout-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 640px) {
+  .repair-callout { margin: 12px 12px 0; padding: 16px; }
+  .repair-callout-actions .button { flex: 1 1 100%; text-align: center; }
+}
